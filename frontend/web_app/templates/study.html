@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Study: {{ topic.title }} – EduGenie</title>
+    <link rel="stylesheet" href="/static/css/main.css">
+    <link rel="stylesheet" href="/static/css/study.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <meta name="description" content="Study {{ topic.title }} with EduGenie - interactive lessons, examples, and practice exercises">
+</head>
+<body>
+    <div class="main-wrapper">
+        <!-- Navigation Header -->
+        <header class="study-header">
+            <div class="container">
+                <nav class="navbar">
+                    <div class="nav-brand">
+                        <a href="/dashboard?student_id={{ student_id }}">🧞‍♂️ EduGenie</a>
+                    </div>
+                    <div class="nav-breadcrumb">
+                        <a href="/dashboard?student_id={{ student_id }}">Dashboard</a>
+                        <span>/</span>
+                        <span>{{ topic.title }}</span>
+                    </div>
+                    <div class="nav-actions">
+                        <button class="btn btn-outline btn-sm" id="bookmarkBtn">📖 Bookmark</button>
+                        <button class="btn btn-outline btn-sm" id="notesBtn">📝 Notes</button>
+                    </div>
+                </nav>
+            </div>
+        </header>
+
+        <main class="study-main">
+            <div class="container">
+                <div class="study-layout">
+                    <!-- Study Content -->
+                    <div class="study-content">
+                        <!-- Topic Header -->
+                        <div class="topic-header">
+                            <div class="topic-icon">📐</div>
+                            <div class="topic-info">
+                                <h1>{{ topic.title }}</h1>
+                                <p class="topic-description">{{ topic.description }}</p>
+                                <div class="topic-meta">
+                                    <span class="difficulty">Beginner Level</span>
+                                    <span class="duration">⏱️ 15-20 minutes</span>
+                                    <span class="progress">📊 0% Complete</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Learning Objectives -->
+                        <section class="objectives-section">
+                            <h2>🎯 Learning Objectives</h2>
+                            <div class="objectives-list">
+                                <div class="objective-item">
+                                    <span class="objective-check">□</span>
+                                    <span>Understand the basic concepts of {{ topic.title.lower() }}</span>
+                                </div>
+                                <div class="objective-item">
+                                    <span class="objective-check">□</span>
+                                    <span>Apply the principles to solve problems</span>
+                                </div>
+                                <div class="objective-item">
+                                    <span class="objective-check">□</span>
+                                    <span>Recognize patterns and relationships</span>
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- Lesson Content -->
+                        <section class="lesson-section">
+                            <h2>📚 Lesson Content</h2>
+                            <div class="lesson-content">
+                                <div class="content-block">
+                                    <h3>Introduction</h3>
+                                    <p>{{ topic.content }}</p>
+                                </div>
+
+                                {% if topic.examples %}
+                                <div class="content-block">
+                                    <h3>Examples</h3>
+                                    <div class="examples-container">
+                                        {% for example in topic.examples %}
+                                        <div class="example-item">
+                                            <div class="example-header">
+                                                <span class="example-number">Example {{ loop.index }}</span>
+                                            </div>
+                                            <div class="example-content">
+                                                <code>{{ example }}</code>
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Interactive Demo -->
+                                <div class="content-block">
+                                    <h3>Interactive Demo</h3>
+                                    <div class="demo-container">
+                                        <div class="demo-input">
+                                            <label for="demoInput">Try it yourself:</label>
+                                            <input type="text" id="demoInput" placeholder="Enter an expression to factor">
+                                            <button class="btn btn-primary" onclick="solveDemo()">Solve</button>
+                                        </div>
+                                        <div class="demo-output" id="demoOutput">
+                                            <p>Enter an expression above to see the solution steps.</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Key Concepts -->
+                                <div class="content-block">
+                                    <h3>Key Concepts</h3>
+                                    <div class="concepts-grid">
+                                        <div class="concept-card">
+                                            <div class="concept-icon">💡</div>
+                                            <h4>Pattern Recognition</h4>
+                                            <p>Look for common patterns in mathematical expressions</p>
+                                        </div>
+                                        <div class="concept-card">
+                                            <div class="concept-icon">🔍</div>
+                                            <h4>Step-by-Step Approach</h4>
+                                            <p>Break down complex problems into smaller steps</p>
+                                        </div>
+                                        <div class="concept-card">
+                                            <div class="concept-icon">✅</div>
+                                            <h4>Verification</h4>
+                                            <p>Always check your answer by expanding back</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- Practice Exercises -->
+                        {% if topic.practice %}
+                        <section class="practice-section">
+                            <h2>🎯 Practice Exercises</h2>
+                            <div class="practice-container">
+                                {% for question in topic.practice %}
+                                <div class="practice-item">
+                                    <div class="practice-header">
+                                        <span class="practice-number">Problem {{ loop.index }}</span>
+                                        <span class="practice-difficulty">⭐ Easy</span>
+                                    </div>
+                                    <div class="practice-question">
+                                        <p>{{ question }}</p>
+                                    </div>
+                                    <div class="practice-input">
+                                        <input type="text" placeholder="Enter your answer" class="practice-answer">
+                                        <button class="btn btn-primary btn-sm" onclick="checkAnswer({{ loop.index0 }})">Check</button>
+                                    </div>
+                                    <div class="practice-feedback" id="feedback-{{ loop.index0 }}"></div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </section>
+                        {% endif %}
+
+                        <!-- Summary -->
+                        <section class="summary-section">
+                            <h2>📋 Summary</h2>
+                            <div class="summary-content">
+                                <p>In this lesson, you learned about {{ topic.title.lower() }} and how to apply these concepts to solve problems. The key takeaways are:</p>
+                                <ul>
+                                    <li>Understanding the fundamental principles</li>
+                                    <li>Recognizing common patterns</li>
+                                    <li>Applying step-by-step problem-solving methods</li>
+                                    <li>Verifying your solutions</li>
+                                </ul>
+                            </div>
+                        </section>
+
+                        <!-- Navigation -->
+                        <div class="lesson-navigation">
+                            <button class="btn btn-secondary" onclick="history.back()">← Previous</button>
+                            <button class="btn btn-primary" onclick="completeTopic()">Mark as Complete</button>
+                            <button class="btn btn-secondary">Next →</button>
+                        </div>
+                    </div>
+
+                    <!-- Sidebar -->
+                    <div class="study-sidebar">
+                        <div class="sidebar-card">
+                            <h3>📊 Progress</h3>
+                            <div class="progress-info">
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 0%"></div>
+                                </div>
+                                <span>0% Complete</span>
+                            </div>
+                            <div class="progress-stats">
+                                <div class="stat">
+                                    <span class="stat-label">Time Spent</span>
+                                    <span class="stat-value" id="timeSpent">0 min</span>
+                                </div>
+                                <div class="stat">
+                                    <span class="stat-label">Objectives</span>
+                                    <span class="stat-value">0/3</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="sidebar-card">
+                            <h3>📝 Quick Notes</h3>
+                            <textarea id="notesPad" placeholder="Take notes as you learn..." rows="6"></textarea>
+                            <button class="btn btn-outline btn-sm" onclick="saveNotes()">Save Notes</button>
+                        </div>
+
+                        <div class="sidebar-card">
+                            <h3>🔗 Related Topics</h3>
+                            <div class="related-topics">
+                                <a href="/study/linear_functions?student_id={{ student_id }}" class="related-link">
+                                    <span class="related-icon">📊</span>
+                                    <span>Linear Functions</span>
+                                </a>
+                                <a href="/study/polynomial_equations?student_id={{ student_id }}" class="related-link">
+                                    <span class="related-icon">🔢</span>
+                                    <span>Polynomial Equations</span>
+                                </a>
+                                <a href="/study/graphing?student_id={{ student_id }}" class="related-link">
+                                    <span class="related-icon">📈</span>
+                                    <span>Graphing</span>
+                                </a>
+                            </div>
+                        </div>
+
+                        <div class="sidebar-card">
+                            <h3>🎯 Need Help?</h3>
+                            <div class="help-options">
+                                <button class="btn btn-outline btn-sm">💬 Ask AI Tutor</button>
+                                <button class="btn btn-outline btn-sm">📹 Watch Video</button>
+                                <button class="btn btn-outline btn-sm">📚 More Examples</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="footer">
+            <div class="container">
+                <p>&copy; 2025 EduGenie. Making learning personalized and effective.</p>
+            </div>
+        </footer>
+    </div>
+
+    <script src="/static/js/main.js"></script>
+    <script src="/static/js/study.js"></script>
+    <script>
+        // Initialize study session
+        let startTime = Date.now();
+        let objectives = 0;
+        
+        function updateTimeSpent() {
+            const elapsed = Math.floor((Date.now() - startTime) / 60000);
+            document.getElementById('timeSpent').textContent = elapsed + ' min';
+        }
+        
+        function checkAnswer(questionIndex) {
+            const input = document.querySelectorAll('.practice-answer')[questionIndex];
+            const feedback = document.getElementById(`feedback-${questionIndex}`);
+            
+            // Simple validation - in production, this would be more sophisticated
+            if (input.value.trim()) {
+                feedback.innerHTML = '<span class="feedback-positive">✅ Good attempt! Check the solution steps above.</span>';
+                feedback.style.display = 'block';
+            } else {
+                feedback.innerHTML = '<span class="feedback-negative">❌ Please enter an answer.</span>';
+                feedback.style.display = 'block';
+            }
+        }
+        
+        function solveDemo() {
+            const input = document.getElementById('demoInput').value;
+            const output = document.getElementById('demoOutput');
+            
+            if (input.trim()) {
+                output.innerHTML = `
+                    <div class="demo-solution">
+                        <h4>Solution Steps:</h4>
+                        <p>1. Analyze the expression: <code>${input}</code></p>
+                        <p>2. Look for common factors or patterns</p>
+                        <p>3. Apply appropriate factoring techniques</p>
+                        <p>4. Verify by expanding the result</p>
+                    </div>
+                `;
+            }
+        }
+        
+        function completeTopic() {
+            if (confirm('Mark this topic as complete?')) {
+                // Update progress
+                document.querySelector('.progress-fill').style.width = '100%';
+                document.querySelector('.progress-info span').textContent = '100% Complete';
+                
+                // Show completion message
+                alert('🎉 Congratulations! You\'ve completed this topic. Keep up the great work!');
+                
+                // Redirect to dashboard
+                window.location.href = `/dashboard?student_id={{ student_id }}`;
+            }
+        }
+        
+        function saveNotes() {
+            const notes = document.getElementById('notesPad').value;
+            if (notes.trim()) {
+                localStorage.setItem(`notes_{{ topic.title|lower|replace(' ', '_') }}`, notes);
+                alert('Notes saved!');
+            }
+        }
+        
+        // Load saved notes
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedNotes = localStorage.getItem('notes_{{ topic.title|lower|replace(" ", "_") }}');
+            if (savedNotes) {
+                document.getElementById('notesPad').value = savedNotes;
+            }
+        });
+        
+        // Update time spent every minute
+        setInterval(updateTimeSpent, 60000);
+    </script>
+</body>
+</html>

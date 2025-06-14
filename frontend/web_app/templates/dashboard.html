@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard – EduGenie</title>
+    <link rel="stylesheet" href="/static/css/main.css">
+    <link rel="stylesheet" href="/static/css/dashboard.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <meta name="description" content="Your personalized learning dashboard - track progress, view achievements, and continue your learning journey">
+</head>
+<body>
+    <div class="main-wrapper">
+        <!-- Navigation Header -->
+        <header class="dashboard-header">
+            <div class="container">
+                <nav class="navbar">
+                    <div class="nav-brand">
+                        <h1>🧞‍♂️ EduGenie</h1>
+                    </div>
+                    <div class="nav-menu">
+                        <a href="/dashboard?student_id={{ student_id }}" class="nav-link active">Dashboard</a>
+                        <a href="/start-quiz" class="nav-link">Take Quiz</a>
+                        <a href="#" class="nav-link">Study</a>
+                        <a href="#" class="nav-link">Progress</a>
+                    </div>
+                    <div class="nav-profile">
+                        <div class="profile-info">
+                            <span class="profile-name">{{ student_id }}</span>
+                            <span class="profile-level">Level 3</span>
+                        </div>
+                    </div>
+                </nav>
+            </div>
+        </header>
+
+        <main class="dashboard-main">
+            <div class="container">
+                {% if error %}
+                <div class="content-card error-card">
+                    <h2>⚠️ Access Required</h2>
+                    <p>{{ error }}</p>
+                    <a href="/" class="btn btn-primary">Go to Home</a>
+                </div>
+                {% else %}
+                
+                <!-- Welcome Section -->
+                <section class="welcome-section">
+                    <div class="welcome-card">
+                        <div class="welcome-content">
+                            <h2>Welcome back, {{ student_id }}! 👋</h2>
+                            <p>Ready to continue your learning journey? You're doing great!</p>
+                        </div>
+                        <div class="welcome-stats">
+                            <div class="stat-item">
+                                <span class="stat-number">{{ progress.current_streak }}</span>
+                                <span class="stat-label">Day Streak</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-number">{{ progress.total_points }}</span>
+                                <span class="stat-label">Total Points</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Progress Overview -->
+                <section class="progress-section">
+                    <div class="section-header">
+                        <h3>📊 Learning Progress</h3>
+                        <div class="progress-summary">
+                            <span>{{ progress.completed_topics }}/{{ progress.total_topics }} Topics Completed</span>
+                        </div>
+                    </div>
+                    
+                    <div class="progress-grid">
+                        <div class="progress-card">
+                            <div class="progress-header">
+                                <h4>Overall Progress</h4>
+                                <span class="progress-percentage">{{ "%.1f"|format(progress.completion_percentage) }}%</span>
+                            </div>
+                            <div class="progress-bar-container">
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: {{ progress.completion_percentage }}%"></div>
+                                </div>
+                            </div>
+                            <div class="progress-details">
+                                <span>{{ progress.completed_topics }} completed</span>
+                                <span>{{ progress.total_topics - progress.completed_topics }} remaining</span>
+                            </div>
+                        </div>
+
+                        <div class="chart-card">
+                            <h4>Weekly Progress</h4>
+                            <canvas id="progressChart" width="400" height="200"></canvas>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Current Learning Path -->
+                <section class="learning-path-section">
+                    <div class="section-header">
+                        <h3>🎯 Current Learning Path</h3>
+                        <a href="/start-quiz" class="btn btn-secondary btn-sm">Take New Assessment</a>
+                    </div>
+                    
+                    <div class="topics-grid">
+                        <div class="topic-card completed">
+                            <div class="topic-status">✅</div>
+                            <div class="topic-content">
+                                <h4>Linear Equations</h4>
+                                <p>Master the fundamentals of linear equations</p>
+                                <div class="topic-progress">
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" style="width: 100%"></div>
+                                    </div>
+                                    <span>100% Complete</span>
+                                </div>
+                            </div>
+                            <div class="topic-actions">
+                                <button class="btn btn-sm btn-outline">Review</button>
+                            </div>
+                        </div>
+
+                        <div class="topic-card in-progress">
+                            <div class="topic-status">📚</div>
+                            <div class="topic-content">
+                                <h4>Quadratic Functions</h4>
+                                <p>Learn about parabolas and quadratic equations</p>
+                                <div class="topic-progress">
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" style="width: 65%"></div>
+                                    </div>
+                                    <span>65% Complete</span>
+                                </div>
+                            </div>
+                            <div class="topic-actions">
+                                <a href="/study/quadratic_functions?student_id={{ student_id }}" class="btn btn-sm btn-primary">Continue</a>
+                            </div>
+                        </div>
+
+                        <div class="topic-card not-started">
+                            <div class="topic-status">⏳</div>
+                            <div class="topic-content">
+                                <h4>Graph Interpretation</h4>
+                                <p>Understand how to read and analyze graphs</p>
+                                <div class="topic-progress">
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" style="width: 0%"></div>
+                                    </div>
+                                    <span>Not Started</span>
+                                </div>
+                            </div>
+                            <div class="topic-actions">
+                                <button class="btn btn-sm btn-outline" disabled>Locked</button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Recent Activity -->
+                <section class="activity-section">
+                    <div class="section-header">
+                        <h3>📈 Recent Activity</h3>
+                        <a href="#" class="btn btn-outline btn-sm">View All</a>
+                    </div>
+                    
+                    <div class="activity-list">
+                        {% for activity in progress.recent_activities %}
+                        <div class="activity-item">
+                            <div class="activity-icon">
+                                {% if activity.score >= 90 %}
+                                    🏆
+                                {% elif activity.score >= 80 %}
+                                    🎯
+                                {% else %}
+                                    📚
+                                {% endif %}
+                            </div>
+                            <div class="activity-content">
+                                <h4>{{ activity.topic }}</h4>
+                                <p>Completed with {{ activity.score }}% score</p>
+                            </div>
+                            <div class="activity-meta">
+                                <span class="activity-date">{{ activity.date }}</span>
+                                <span class="activity-score score-{{ 'excellent' if activity.score >= 90 else 'good' if activity.score >= 80 else 'needs-improvement' }}">
+                                    {{ activity.score }}%
+                                </span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </section>
+
+                <!-- Quick Actions -->
+                <section class="quick-actions-section">
+                    <div class="section-header">
+                        <h3>⚡ Quick Actions</h3>
+                    </div>
+                    
+                    <div class="quick-actions-grid">
+                        <a href="/start-quiz" class="quick-action-card">
+                            <div class="action-icon">🎯</div>
+                            <h4>Take Assessment</h4>
+                            <p>Evaluate your current knowledge</p>
+                        </a>
+                        
+                        <a href="/study/quadratic_functions?student_id={{ student_id }}" class="quick-action-card">
+                            <div class="action-icon">📚</div>
+                            <h4>Continue Learning</h4>
+                            <p>Resume your current topic</p>
+                        </a>
+                        
+                        <a href="#" class="quick-action-card">
+                            <div class="action-icon">🏆</div>
+                            <h4>View Achievements</h4>
+                            <p>See your learning milestones</p>
+                        </a>
+                        
+                        <a href="#" class="quick-action-card">
+                            <div class="action-icon">📊</div>
+                            <h4>Progress Report</h4>
+                            <p>Detailed performance analytics</p>
+                        </a>
+                    </div>
+                </section>
+
+                {% endif %}
+            </div>
+        </main>
+
+        <footer class="footer">
+            <div class="container">
+                <p>&copy; 2025 EduGenie. Your AI-powered learning companion.</p>
+            </div>
+        </footer>
+    </div>
+
+    <script src="/static/js/main.js"></script>
+    <script src="/static/js/dashboard.js"></script>
+</body>
+</html>

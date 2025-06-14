@@ -1,0 +1,20 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Run Tests",
+			"type": "shell",
+			"command": "python",
+			"args": [
+				"-m",
+				"pytest",
+				"tests/",
+				"--verbose"
+			],
+			"group": "test",
+			"problemMatcher": [
+				"$gcc"
+			]
+		}
+	]
+}
