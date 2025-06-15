@@ -5,6 +5,7 @@
 ### Option 1: Service Account Key File (Recommended for Development)
 
 1. **Create a Service Account:**
+
    - Go to [Google Cloud Console](https://console.cloud.google.com/)
    - Navigate to IAM & Admin > Service Accounts
    - Click "Create Service Account"
@@ -12,6 +13,7 @@
    - Grant it the "Cloud Datastore User" role
 
 2. **Download Service Account Key:**
+
    - Click on the created service account
    - Go to "Keys" tab
    - Click "Add Key" > "Create new key"
@@ -28,6 +30,7 @@
 ### Option 2: Application Default Credentials (Production)
 
 For production environments (Google Cloud Run, Compute Engine, etc.):
+
 ```bash
 # Set environment variable
 export GOOGLE_APPLICATION_CREDENTIALS="/path/to/service-account.json"
@@ -37,6 +40,7 @@ export GOOGLE_APPLICATION_CREDENTIALS="/path/to/service-account.json"
 ## Usage Examples
 
 ### Basic Initialization
+
 ```python
 from core.firestore_client import get_firestore_client
 
@@ -51,6 +55,7 @@ client = get_firestore_client()
 ```
 
 ### Student CRUD Operations
+
 ```python
 # Create a student
 student_data = {
@@ -82,13 +87,14 @@ print(f"Total active students: {len(students)}")
 ```
 
 ### Quiz Results and Assessments
+
 ```python
 from core.models import AssessmentAnalysis
 
 # Save quiz results
 answers = {
     "q1": "B",
-    "q2": "A", 
+    "q2": "A",
     "q3": "C"
 }
 
@@ -109,6 +115,7 @@ for assessment in assessments:
 ```
 
 ### Learning Paths
+
 ```python
 from core.models import LearningPath
 
@@ -131,6 +138,7 @@ for path in paths:
 ```
 
 ### Progress Tracking
+
 ```python
 from core.models import ProgressEntry
 
@@ -153,6 +161,7 @@ for entry in progress_history:
 ```
 
 ### Lesson Content Management
+
 ```python
 # Save lesson content
 lesson_data = {
@@ -177,6 +186,7 @@ if lesson:
 ```
 
 ### Advanced Queries
+
 ```python
 # Search students by field
 math_students = client.search_students("subjects", "Math")
@@ -225,16 +235,16 @@ service cloud.firestore {
     match /students/{studentId} {
       allow read, write: if request.auth != null && request.auth.uid == studentId;
     }
-    
+
     // Only authenticated users can read lesson content
     match /lesson_content/{document} {
       allow read: if request.auth != null;
       allow write: if request.auth != null && request.auth.token.admin == true;
     }
-    
+
     // Learning paths are readable by the student they belong to
     match /learning_paths/{pathId} {
-      allow read, write: if request.auth != null && 
+      allow read, write: if request.auth != null &&
         request.auth.uid == resource.data.student_id;
     }
   }
@@ -256,32 +266,32 @@ service cloud.firestore {
 def test_firestore_connection():
     try:
         client = get_firestore_client()
-        
+
         # Test create
         test_student = {
             "name": "Test Student",
             "email": "test@example.com",
             "test": True
         }
-        
+
         success = client.create_student("test_student", test_student)
         assert success, "Failed to create test student"
-        
+
         # Test read
         student = client.get_student("test_student")
         assert student is not None, "Failed to read test student"
         assert student["name"] == "Test Student"
-        
+
         # Test update
         success = client.update_student("test_student", {"grade": "11th"})
         assert success, "Failed to update test student"
-        
+
         # Test delete
         success = client.delete_student("test_student")
         assert success, "Failed to delete test student"
-        
+
         print("All Firestore tests passed!")
-        
+
     except Exception as e:
         print(f"Firestore test failed: {e}")
 
