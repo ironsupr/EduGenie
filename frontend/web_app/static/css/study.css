@@ -777,10 +777,6 @@
     background: rgba(0, 217, 255, 0.08);
     border-color: var(--primary-color);
     transform: translateX(8px);
-}.related-link:hover {
-    background: rgba(0, 217, 255, 0.08);
-    border-color: var(--primary-color);
-    transform: translateX(8px);
 }
 
 .related-icon {

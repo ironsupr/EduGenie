@@ -27,15 +27,15 @@ class StudentBase(BaseModel):
     meta_data: Optional[Dict[str, Any]] = None
 
 class AssessmentAnalysis(BaseModel):
-    strengths: List[str] = Field(..., min_items=0, description="Topics the student excels at")
-    weaknesses: List[str] = Field(..., min_items=0, description="Topics needing improvement")
+    strengths: List[str] = Field(..., min_length=0, description="Topics the student excels at")
+    weaknesses: List[str] = Field(..., min_length=0, description="Topics needing improvement")
     recommendations: Optional[List[str]] = Field(default_factory=list)
     meta_data: Optional[Dict[str, Any]] = None
 
 class LearningPath(BaseModel):
     student_id: str = Field(..., min_length=1)
     path_id: str = Field(..., min_length=1)
-    topics: List[str] = Field(..., min_items=1)
+    topics: List[str] = Field(..., min_length=1)
     difficulty: DifficultyLevel = Field(default=DifficultyLevel.BEGINNER)
     planned_days: int = Field(..., gt=0, le=365)
     created_at: datetime = Field(default_factory=datetime.utcnow)

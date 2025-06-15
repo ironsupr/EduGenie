@@ -34,8 +34,8 @@ app.mount("/static", StaticFiles(directory=settings.STATIC_DIR), name="static")
 # Initialize templates
 templates = Jinja2Templates(directory=settings.TEMPLATES_DIR)
 
-# Include router from the frontend
-app.include_router(student_routes.router)
+# Include router from the frontend with prefix to avoid conflicts
+app.include_router(student_routes.router, prefix="/app")
 
 @app.get("/")
 async def home():

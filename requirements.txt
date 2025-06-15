@@ -1,7 +1,7 @@
 # Core web framework
 fastapi==0.110.0
 uvicorn[standard]==0.29.0
-pydantic==2.7.1
+pydantic[email]==2.7.1
 pydantic-settings==2.1.0
 
 # HTML templating
@@ -16,9 +16,7 @@ google-api-python-client==2.126.0
 # AI/ML Components
 dialogflow==1.1.0
 
-# Testing and Development
-pytest==8.0.0
-pytest-asyncio==0.23.5
+# Development tools
 httpx==0.26.0
 requests==2.31.0
 

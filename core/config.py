@@ -2,10 +2,13 @@
 Application configuration settings
 """
 from pydantic_settings import BaseSettings
+from pydantic import ConfigDict
 from typing import List, Optional
 from datetime import datetime
 
 class Settings(BaseSettings):
+    model_config = ConfigDict(env_file=".env", case_sensitive=True)
+    
     # Application Info
     PROJECT_ID: str = "edugenie"
     VERSION: str = "1.0.0"
@@ -27,6 +30,21 @@ class Settings(BaseSettings):
     # Security
     CORS_ORIGINS: List[str] = ["*"]
     API_KEY_HEADER: str = "X-API-Key"
+      # Database
+    DATABASE_URL: str = "sqlite:///./edugenie.db"
+    
+    # Google Cloud / Firestore Configuration
+    GOOGLE_CLOUD_PROJECT_ID: Optional[str] = None
+    FIRESTORE_SERVICE_ACCOUNT_PATH: Optional[str] = None
+    FIRESTORE_COLLECTION_PREFIX: str = ""  # For multi-environment support
+    
+    # Redis (Caching & Background Tasks)
+    REDIS_URL: str = "redis://localhost:6379/0"
+    CELERY_BROKER_URL: str = "redis://localhost:6379/0"
+    CELERY_RESULT_BACKEND: str = "redis://localhost:6379/0"
+    
+    # AI Services
+    OPENAI_API_KEY: Optional[str] = None
     
     # Monitoring
     HEALTH_CHECK_INTERVAL: int = 300  # 5 minutes
@@ -35,10 +53,6 @@ class Settings(BaseSettings):
     # Time Settings
     TIMEZONE: str = "UTC"
     CREATED_AT: datetime = datetime.now()
-    
-    class Config:
-        env_file = ".env"
-        case_sensitive = True
 
 # Create settings instance
 settings = Settings()

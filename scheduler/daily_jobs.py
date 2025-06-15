@@ -1,6 +1,6 @@
 # scheduler/daily_jobs.py
 
-from core import firestore_client
+from core.firestore_client import get_firestore_client
 import datetime
 import random
 
