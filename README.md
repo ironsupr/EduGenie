@@ -15,7 +15,7 @@ Follow these steps to set up and run EduGenie:
 2. **Project Setup**
     ```bash
     # Clone repository
-    git clone https://github.com/yourusername/EduGenie.git
+    git clone https://github.com/Ironsupr/EduGenie.git
     cd EduGenie
 
     # Install dependencies
