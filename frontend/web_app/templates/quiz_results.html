@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Results | EduGenie</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/quiz_interface.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        .results-container {
+            max-width: 1000px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+        
+        .results-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 16px;
+            padding: 2rem;
+            color: white;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .score-display {
+            font-size: 4rem;
+            font-weight: 700;
+            margin: 1rem 0;
+        }
+        
+        .performance-badge {
+            display: inline-block;
+            padding: 0.5rem 1.5rem;
+            border-radius: 25px;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+        
+        .performance-excellent {
+            background: rgba(72, 187, 120, 0.2);
+            color: #22543d;
+            border: 2px solid #48bb78;
+        }
+        
+        .performance-good {
+            background: rgba(245, 158, 11, 0.2);
+            color: #92400e;
+            border: 2px solid #f59e0b;
+        }
+        
+        .performance-needs-improvement {
+            background: rgba(239, 68, 68, 0.2);
+            color: #991b1b;
+            border: 2px solid #ef4444;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #5F60F5;
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-label {
+            color: #718096;
+            font-size: 0.9rem;
+        }
+        
+        .question-review {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+        
+        .question-item {
+            border-bottom: 1px solid #e2e8f0;
+            padding: 1.5rem 0;
+        }
+        
+        .question-item:last-child {
+            border-bottom: none;
+        }
+        
+        .question-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .question-number {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            color: white;
+        }
+        
+        .question-number.correct {
+            background: #48bb78;
+        }
+        
+        .question-number.incorrect {
+            background: #f56565;
+        }
+        
+        .question-number.flagged::after {
+            content: "🚩";
+            position: absolute;
+            margin-left: 30px;
+            margin-top: -30px;
+        }
+        
+        .question-text {
+            flex: 1;
+            font-weight: 500;
+        }
+        
+        .answer-comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .answer-box {
+            padding: 1rem;
+            border-radius: 8px;
+            border: 2px solid;
+        }
+        
+        .your-answer {
+            border-color: #f56565;
+            background: #fed7d7;
+        }
+        
+        .your-answer.correct {
+            border-color: #48bb78;
+            background: #c6f6d5;
+        }
+        
+        .correct-answer {
+            border-color: #48bb78;
+            background: #c6f6d5;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 2rem;
+        }
+        
+        .improvement-suggestions {
+            background: linear-gradient(135deg, #fef5e7, #fff8e1);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .improvement-suggestions h3 {
+            color: #c05621;
+            margin-bottom: 1rem;
+        }
+        
+        .suggestion-list {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .suggestion-list li {
+            padding: 0.5rem 0;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+        
+        .suggestion-list li::before {
+            content: "💡";
+            position: absolute;
+            left: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="results-container">
+        <!-- Results Header -->
+        <div class="results-header">
+            <h1>Quiz Complete!</h1>
+            <div class="score-display">{{ results.score|round(1) }}%</div>
+            <div class="performance-badge performance-{{ performance_level.lower().replace(' ', '-') }}">
+                {{ performance_level }}
+            </div>
+            <p style="margin-top: 1rem; opacity: 0.9;">
+                You answered {{ results.correct_count }} out of {{ results.total_questions }} questions correctly
+            </p>
+        </div>
+        
+        <!-- Statistics Grid -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value">{{ results.score|round(1) }}%</div>
+                <div class="stat-label">Final Score</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ results.correct_count }}/{{ results.total_questions }}</div>
+                <div class="stat-label">Correct Answers</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ (results.time_taken // 60) }}:{{ '%02d'|format(results.time_taken % 60) }}</div>
+                <div class="stat-label">Time Taken</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ results.flagged_questions|length }}</div>
+                <div class="stat-label">Questions Flagged</div>
+            </div>
+        </div>
+        
+        <!-- Improvement Suggestions -->
+        {% set incorrect_count = results.total_questions - results.correct_count %}
+        {% if incorrect_count > 0 %}
+        <div class="improvement-suggestions">
+            <h3>📚 Areas for Improvement</h3>
+            <ul class="suggestion-list">
+                {% if results.score < 70 %}
+                <li>Review the fundamental concepts covered in this quiz</li>
+                <li>Practice similar problems to strengthen your understanding</li>
+                <li>Consider reaching out to your instructor for additional help</li>
+                {% elif results.score < 90 %}
+                <li>Focus on the questions you got wrong to identify knowledge gaps</li>
+                <li>Practice more challenging problems in these areas</li>
+                <li>Review the explanations for incorrect answers</li>
+                {% else %}
+                <li>Great job! Focus on the minor details you missed</li>
+                <li>Challenge yourself with more advanced problems</li>
+                <li>Help other students to reinforce your knowledge</li>
+                {% endif %}
+            </ul>
+        </div>
+        {% endif %}
+        
+        <!-- Question Review -->
+        <div class="question-review">
+            <h2>Question Review</h2>
+            <p style="color: #718096; margin-bottom: 2rem;">
+                Review your answers and see where you can improve
+            </p>
+            
+            {% for question in detailed_results %}
+            <div class="question-item">
+                <div class="question-header">
+                    <div class="question-number {{ 'correct' if question.is_correct else 'incorrect' }} {{ 'flagged' if question.flagged else '' }}">
+                        {{ question.question_number }}
+                    </div>
+                    <div class="question-text">{{ question.question_text }}</div>
+                    <div class="difficulty-badge {{ question.difficulty }}">{{ question.difficulty }}</div>
+                </div>
+                
+                <div class="answer-comparison">
+                    <div class="answer-box your-answer {{ 'correct' if question.is_correct else '' }}">
+                        <strong>Your Answer:</strong><br>
+                        {% if question.user_answer %}
+                            {{ question.user_answer }}
+                        {% else %}
+                            <em>No answer selected</em>
+                        {% endif %}
+                    </div>
+                    <div class="answer-box correct-answer">
+                        <strong>Correct Answer:</strong><br>
+                        {{ question.correct_answer }}
+                    </div>
+                </div>
+                
+                {% if question.flagged %}
+                <div style="margin-top: 1rem; padding: 0.5rem; background: #fef5e7; border-radius: 6px; font-size: 0.9rem;">
+                    🚩 <strong>You flagged this question</strong> - Good strategy to mark questions you weren't sure about!
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+            <button class="btn btn-outline" onclick="window.print()">📄 Print Results</button>
+            <button class="btn btn-secondary" onclick="history.back()">↩️ Back to Quiz</button>
+            <button class="btn btn-primary" onclick="location.href='/dashboard'">🏠 Return to Dashboard</button>
+        </div>
+    </div>
+    
+    <script>
+        // Add some interactive features
+        document.addEventListener('DOMContentLoaded', function() {
+            // Animate score display
+            const scoreDisplay = document.querySelector('.score-display');
+            const finalScore = "{{ results.score }}";
+            let currentScore = 0;
+            const increment = finalScore / 50; // 50 steps for smooth animation
+            
+            const animateScore = () => {
+                if (currentScore < finalScore) {
+                    currentScore += increment;
+                    scoreDisplay.textContent = Math.min(currentScore, finalScore).toFixed(1) + '%';
+                    requestAnimationFrame(animateScore);
+                }
+            };
+            
+            // Start animation after a short delay
+            setTimeout(animateScore, 500);
+            
+            // Add click handlers for question items
+            document.querySelectorAll('.question-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    this.style.backgroundColor = this.style.backgroundColor === 'rgb(247, 250, 252)' ? '' : '#f7fafc';
+                });
+            });
+            
+            // Log analytics event
+            console.log('Quiz completed:', {
+                score: "{{ results.score }}",
+                timeSpent: {{ results.time_taken }},
+                questionsCorrect: {{ results.correct_count }},
+                totalQuestions: {{ results.total_questions }}
+            });
+        });
+        
+        // Performance feedback based on score
+        const showPerformanceFeedback = () => {
+            const score = {{ results.score }};
+            let message, emoji;
+            
+            if (score >= 90) {
+                message = "Outstanding work! You've mastered this material.";
+                emoji = "🌟";
+            } else if (score >= 80) {
+                message = "Great job! You have a solid understanding.";
+                emoji = "🎉";
+            } else if (score >= 70) {
+                message = "Good effort! A little more practice will help.";
+                emoji = "👍";
+            } else if (score >= 60) {
+                message = "You're on the right track. Keep studying!";
+                emoji = "📚";
+            } else {
+                message = "Don't give up! Review the material and try again.";
+                emoji = "💪";
+            }
+            
+            // Show encouraging message
+            setTimeout(() => {
+                const header = document.querySelector('.results-header');
+                const encouragement = document.createElement('div');
+                encouragement.style.cssText = 'margin-top: 1rem; padding: 1rem; background: rgba(255,255,255,0.2); border-radius: 8px; animation: fadeIn 0.5s ease;';
+                encouragement.innerHTML = `<div style="font-size: 1.5rem;">${emoji}</div><div>${message}</div>`;
+                header.appendChild(encouragement);
+            }, 2000);
+        };
+        
+        showPerformanceFeedback();
+    </script>
+</body>
+</html>

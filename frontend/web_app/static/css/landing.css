@@ -258,6 +258,7 @@ body {
   grid-template-columns: 1fr 1fr;
   gap: var(--space-3xl);
   align-items: center;
+  min-height: 600px; /* Add minimum height for better vertical spacing */
 }
 
 .hero-content {
@@ -328,12 +329,13 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  min-height: 500px; /* Add minimum height for better spacing */
 }
 
 .hero-illustration {
   position: relative;
-  width: 400px;
-  height: 400px;
+  width: 450px; /* Increase width for better spacing */
+  height: 450px; /* Increase height for better spacing */
 }
 
 .hero-glow {
@@ -346,6 +348,7 @@ body {
   background: radial-gradient(circle, rgba(95, 96, 245, 0.2) 0%, transparent 70%);
   border-radius: 50%;
   animation: pulse 4s ease-in-out infinite;
+  z-index: 1; /* Ensure glow is behind cards */
 }
 
 .floating-card {
@@ -360,6 +363,9 @@ body {
   font-weight: 600;
   color: var(--gray-700);
   animation: float 6s ease-in-out infinite;
+  white-space: nowrap; /* Prevent text wrapping */
+  z-index: 2; /* Ensure cards are above glow */
+  min-width: 140px; /* Minimum width for consistency */
 }
 
 .floating-card i {
@@ -368,20 +374,20 @@ body {
 }
 
 .card-1 {
-  top: 20%;
-  left: 10%;
+  top: 15%; /* Adjust positioning for better spacing */
+  left: -5%; /* Move further left */
   animation-delay: 0s;
 }
 
 .card-2 {
-  top: 60%;
-  right: 20%;
+  top: 55%; /* Adjust positioning */
+  right: -10%; /* Move further right */
   animation-delay: 2s;
 }
 
 .card-3 {
-  bottom: 30%;
-  left: 20%;
+  bottom: 20%; /* Adjust positioning */
+  left: 15%; /* Move more towards center-left */
   animation-delay: 4s;
 }
 
@@ -991,14 +997,35 @@ select:focus {
     gap: var(--space-xl);
     text-align: center;
   }
-  
-  .hero-visual {
+    .hero-visual {
     order: -1;
+    margin-bottom: var(--space-xl); /* Add spacing below visual on mobile */
   }
   
   .hero-illustration {
     width: 300px;
     height: 300px;
+  }
+  
+  /* Adjust floating cards for tablet screens */
+  .floating-card {
+    padding: 0.75rem 1rem; /* Smaller padding on tablets */
+    font-size: var(--font-size-sm);
+  }
+  
+  .card-1 {
+    top: 10%;
+    left: -10%;
+  }
+  
+  .card-2 {
+    top: 50%;
+    right: -15%;
+  }
+  
+  .card-3 {
+    bottom: 15%;
+    left: 10%;
   }
   
   .steps-container {
@@ -1038,9 +1065,23 @@ select:focus {
     flex-direction: column;
     align-items: center;
   }
-  
-  .hero-stats {
+    .hero-stats {
     justify-content: center;
+  }
+  
+  /* Hide floating cards on mobile to prevent overlap issues */
+  .floating-card {
+    display: none;
+  }
+  
+  .hero-illustration {
+    width: 250px;
+    height: 250px;
+  }
+  
+  .hero-glow {
+    width: 200px;
+    height: 200px;
   }
   
   .features-grid,

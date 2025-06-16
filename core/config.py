@@ -13,10 +13,23 @@ class Settings(BaseSettings):
     PROJECT_ID: str = "edugenie"
     VERSION: str = "1.0.0"
     DEBUG: bool = False
-    
-    # Paths
+      # Paths
     TEMPLATES_DIR: str = "frontend/web_app/templates"
     STATIC_DIR: str = "frontend/web_app/static"
+    
+    # Google AI SDK Configuration
+    GOOGLE_AI_API_KEY: Optional[str] = None
+    
+    # AI Model Configuration
+    AI_MODEL_TEXT: str = "gemini-1.5-flash"
+    AI_MODEL_CHAT: str = "gemini-1.5-flash"
+    AI_MODEL_EMBEDDING: str = "text-embedding-004"
+    
+    # AI Generation Settings
+    AI_TEMPERATURE: float = 0.7
+    AI_TOP_P: float = 0.8
+    AI_TOP_K: int = 40
+    AI_MAX_OUTPUT_TOKENS: int = 2048
     
     # Learning Settings
     MIN_PASS_SCORE: float = 0.7
@@ -30,13 +43,29 @@ class Settings(BaseSettings):
     # Security
     CORS_ORIGINS: List[str] = ["*"]
     API_KEY_HEADER: str = "X-API-Key"
-      # Database
+    
+    # OAuth Configuration
+    GOOGLE_CLIENT_ID: Optional[str] = None
+    GOOGLE_CLIENT_SECRET: Optional[str] = None
+    GITHUB_CLIENT_ID: Optional[str] = None
+    GITHUB_CLIENT_SECRET: Optional[str] = None
+    SECRET_KEY: Optional[str] = None
+    OAUTH_REDIRECT_URI: str = "http://127.0.0.1:8000/auth/callback"
+    
+    # Database
     DATABASE_URL: str = "sqlite:///./edugenie.db"
     
-    # Google Cloud / Firestore Configuration
-    GOOGLE_CLOUD_PROJECT_ID: Optional[str] = None
+    # Google Cloud / Firestore Configuration    GOOGLE_CLOUD_PROJECT_ID: Optional[str] = None
     FIRESTORE_SERVICE_ACCOUNT_PATH: Optional[str] = None
     FIRESTORE_COLLECTION_PREFIX: str = ""  # For multi-environment support
+    
+    # Legacy Firestore settings (for backward compatibility)
+    API_KEY: Optional[str] = None
+    GOOGLE_CLOUD_PROJECT: Optional[str] = None
+    GOOGLE_APPLICATION_CREDENTIALS: Optional[str] = None
+    DATABASE_NAME: str = "edugenie"
+    ENABLE_ADVANCED_ANALYTICS: bool = True
+    ENABLE_REALTIME_FEEDBACK: bool = True
     
     # Redis (Caching & Background Tasks)
     REDIS_URL: str = "redis://localhost:6379/0"

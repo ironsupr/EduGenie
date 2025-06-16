@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from frontend.web_app.routes import student_routes
+from core.oauth_routes import router as oauth_router
 from core.config import settings
 from utils.logger import setup_logger
 from typing import Dict, Any
@@ -37,17 +38,11 @@ templates = Jinja2Templates(directory=settings.TEMPLATES_DIR)
 # Include router from the frontend with prefix to avoid conflicts
 app.include_router(student_routes.router, prefix="/app")
 
-@app.get("/")
-async def home():
-    """
-    Root endpoint returning welcome message.
-    """
-    try:
-        logger.info("Accessing home endpoint")
-        return {"message": "Welcome to EduGenie – AI-powered personalized learning platform"}
-    except Exception as e:
-        logger.error(f"Error in home endpoint: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+# Include router without prefix for main routes (landing page, etc.)
+app.include_router(student_routes.router)
+
+# Include OAuth router
+app.include_router(oauth_router)
 
 @app.get("/health")
 async def health_check() -> Dict[str, Any]:
@@ -85,3 +80,7 @@ async def check_database_health() -> str:
     except Exception as e:
         logger.error(f"Database health check failed: {str(e)}")
         return "unhealthy"
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
