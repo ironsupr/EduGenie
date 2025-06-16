@@ -50,6 +50,8 @@ Create a `.env` file in your project root:
 # Google Cloud Configuration
 GOOGLE_CLOUD_PROJECT_ID=your-project-id
 FIRESTORE_SERVICE_ACCOUNT_PATH=./firestore-service-account.json
+# Path for Firebase Admin SDK config (can be the same as Firestore if using one service account for both)
+FIREBASE_ADMIN_SDK_CONFIG_PATH=./firestore-service-account.json
 
 # Optional: Database URL for local development
 FIRESTORE_EMULATOR_HOST=localhost:8080  # if using emulator
@@ -186,37 +188,87 @@ chmod 600 firestore-service-account.json
 # Production deployment
 export GOOGLE_CLOUD_PROJECT_ID=your-project-id
 export FIRESTORE_SERVICE_ACCOUNT_PATH=/secure/path/service-account.json
+# Also for Firebase Admin SDK if different
+export FIREBASE_ADMIN_SDK_CONFIG_PATH=/secure/path/firebase-admin-sdk-config.json
 ```
 
-### 3. Firestore Security Rules
+### 3. Firestore Security Rules (Updated for Firebase Authentication)
 
-Set up security rules in the Firebase Console:
+Set up security rules in the Firebase Console. These rules assume you are using Firebase Authentication and that your Firestore documents for users contain a `firebase_uid` field matching the Firebase Auth UID.
 
 ```javascript
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Students can only access their own data
-    match /students/{studentId} {
-      allow read, write: if request.auth != null &&
-                           request.auth.uid == studentId;
+
+    // Students collection
+    // - Users can read and update their own document (identified by firebase_uid field).
+    // - Creation of student documents is primarily handled by the backend.
+    // - Deletion should likely be backend-only or a soft delete via an update.
+    match /students/{studentDocId} {
+      allow read, update: if request.auth != null && request.auth.uid == resource.data.firebase_uid;
+      // If client-side creation after Firebase user creation is needed:
+      // allow create: if request.auth != null &&
+      //                 request.resource.data.firebase_uid == request.auth.uid &&
+      //                 studentDocId == request.auth.uid; // If doc ID is Firebase UID for email/pass users
+      // For OAuth users, doc ID is provider_providerid. Backend sets firebase_uid.
+      // The current rule is simpler and assumes backend correctly sets firebase_uid on create.
     }
 
-    // Lesson content is read-only for authenticated users
-    match /lesson_content/{document} {
+    // Lesson content: Readable by any authenticated user, writable by admins.
+    // Admins are identified by a custom claim 'admin: true' in their Firebase Auth token.
+    match /lesson_content/{lessonId} {
       allow read: if request.auth != null;
-      allow write: if request.auth != null &&
-                     'admin' in request.auth.token;
+      allow write: if request.auth != null && request.auth.token.admin == true;
     }
 
-    // Learning paths accessible by owner
+    // Learning paths:
+    // ASSUMPTION: Learning path documents have a 'firebase_uid' field linking them to the user.
+    // If the field is named 'student_id' and stores the Firebase UID, adjust accordingly.
     match /learning_paths/{pathId} {
-      allow read, write: if request.auth != null &&
-                           request.auth.uid == resource.data.student_id;
+      allow read, write: if request.auth != null && request.auth.uid == resource.data.firebase_uid;
+      // Alternative if using 'student_id' to store Firebase UID:
+      // allow read, write: if request.auth != null && request.auth.uid == resource.data.student_id;
     }
+
+    // Subcollections of students: assessments
+    // Access is granted if the requester's UID matches the firebase_uid in the parent student document.
+    match /students/{studentDocId}/assessments/{assessmentId} {
+      allow read, write: if request.auth != null &&
+                           get(/databases/$(database)/documents/students/$(studentDocId)).data.firebase_uid == request.auth.uid;
+    }
+
+    // Subcollections of students: progress
+    match /students/{studentDocId}/progress/{progressId} {
+      allow read, write: if request.auth != null &&
+                           get(/databases/$(database)/documents/students/$(studentDocId)).data.firebase_uid == request.auth.uid;
+    }
+
+    // Add rules for other collections (e.g., courses, university_exams) and subcollections as needed.
+    // Example for a 'courses' collection (if it exists and has user-specific data or public read):
+    // match /courses/{courseId} {
+    //   allow read: if request.auth != null; // Or allow read: if true; for public courses
+    //   // Write access typically admin-only or through backend logic
+    //   allow write: if request.auth != null && request.auth.token.admin == true;
+    // }
   }
 }
 ```
+
+**Explanation of Rule Changes & Assumptions:**
+
+*   **`request.auth.uid`**: This is the Firebase Authentication UID of the user making the request.
+*   **`resource.data.firebase_uid`**: This refers to the `firebase_uid` field stored *within* the Firestore document being accessed.
+*   **`students` collection:**
+    *   The rule `request.auth.uid == resource.data.firebase_uid` now correctly checks the stored `firebase_uid` field, making it work for both OAuth-created users (doc ID `provider_providerid`) and email/password-created users (doc ID `firebase_uid`, where `firebase_uid` field also exists).
+*   **`learning_paths` collection:**
+    *   Assumes a `firebase_uid` field exists in these documents. If it's `student_id` and that field holds the Firebase UID, the rule should be `request.auth.uid == resource.data.student_id`. Clarify this field's name and content.
+*   **Admin Rights:** Write access to `lesson_content` relies on a custom claim `admin: true` in the user's Firebase token. This needs to be set for admin users via the Firebase Admin SDK.
+*   **Subcollections (`assessments`, `progress`):** Rules use `get()` to fetch the parent student document and verify ownership via its `firebase_uid` field. This is a standard pattern for securing subcollections.
+*   **Document Creation (`create`):** The drafted rules for `students` focus on `read` and `update`. `create` is complex due to the two types of document IDs (`provider_providerid` for OAuth, `firebase_uid` for email/pass). The backend currently handles creation. If client-side creation were allowed (e.g., user creates their own profile doc after Firebase Auth user exists), specific rules would be needed:
+    *   For email/pass users (where doc ID is Firebase UID): `allow create: if request.auth.uid == studentDocId && request.auth.uid == request.resource.data.firebase_uid;`
+    *   OAuth user docs are created by the backend during callback, so client-side `create` for those doc ID patterns isn't typical.
+*   **Other Collections:** Placeholder comments are added for other potential collections like `courses`. These would need their own specific rules based on data sensitivity and ownership.
 
 ### 4. Monitor Usage
 
@@ -310,7 +362,7 @@ query = (db.collection('students')
 - [ ] JSON key file downloaded and secured
 - [ ] Environment variables configured
 - [ ] Test connection successful
-- [ ] Security rules implemented
+- [ ] Security rules implemented and tested
 - [ ] Monitoring and alerting set up
 - [ ] Backup strategy in place
 

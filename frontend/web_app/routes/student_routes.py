@@ -1,9 +1,22 @@
 # frontend/web_app/routes/student_routes.py
+# Test comment to check if file can be modified
 
-from fastapi import APIRouter, Request, Form, HTTPException
+from fastapi import APIRouter, Request, Form, HTTPException, Depends
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from typing import Optional, Dict, Any
+
+# Import the authentication dependency
+from frontend.web_app.auth_utils import get_current_active_user
+
+# Attempt to import Firestore client for actual data fetching
+try:
+    from core.firestore_client import get_firestore_client, FirestoreClient
+    _firestore_client_available = True
+    logger.info("Firestore client successfully imported for student routes.")
+except ImportError:
+    _firestore_client_available = False
+    logger.warning("Student Routes Warning: Firestore client not available. Dashboard will use mock data.")
 from datetime import datetime
 import json
 from utils.logger import setup_logger
@@ -23,26 +36,67 @@ async def home(request: Request):
     return templates.TemplateResponse(request, "landing.html")
 
 @router.get("/dashboard", response_class=HTMLResponse)
-async def dashboard(request: Request, student_id: str = None):
-    """Modern student dashboard with gamification and AI assistant"""
-    if not student_id:
-        return templates.TemplateResponse(request, "dashboard_new.html", {
-            "error": "Please provide a student ID"
-        })
+async def dashboard(request: Request, current_user: Dict[str, Any] = Depends(get_current_active_user)):
+    """Modern student dashboard with gamification and AI assistant, protected by authentication."""
     
-    # Enhanced mock data for the new dashboard
-    student_data = students_data.get(student_id, {
-        "name": "Alex Johnson",
-        "email": "alex.johnson@student.edu",
-        "profile_picture": "/static/images/default-avatar.png",
-        "level": 12,
-        "current_xp": 2450,
-        "xp_to_next_level": 500,
-        "current_streak": 7,
-        "longest_streak": 15,
-        "global_rank": 156,
-        "rank_change": "+3"
-    })
+    firestore_user_id = current_user.get("sub")
+    if not firestore_user_id:
+        # Should be caught by dependency, but as a safeguard
+        raise HTTPException(status_code=403, detail="User ID missing from token.")
+
+    student_data_from_db = None
+    if _firestore_client_available:
+        try:
+            firestore_client: FirestoreClient = get_firestore_client()
+            # Use Firebase UID (from token's 'sub' claim) to fetch student document
+            student_doc = firestore_client.get_student_by_firebase_uid(firebase_uid=firestore_user_id)
+            if student_doc:
+                student_data_from_db = student_doc
+                # Ensure basic fields expected by template are present
+                # student_doc['id'] is the Firestore document ID (e.g. google_xxxx), not the Firebase UID.
+                # The template's {{ student_id }} should consistently be one type of ID.
+                # If student_data.id is used in template, ensure it's what you expect (Firebase UID or Firestore Doc ID)
+                student_data_from_db.setdefault("name", current_user.get("name", "Learner"))
+                student_data_from_db.setdefault("email", current_user.get("email", "N/A"))
+                student_data_from_db.setdefault("profile_picture", "/static/images/default-avatar.png")
+                # 'id' field in student_data_from_db will be the Firestore document ID.
+                # We already have firestore_user_id which is the Firebase UID.
+                # Decide which one to pass as 'student_id' to the template.
+                # For consistency, if 'sub' from token is Firebase UID, template 'student_id' should be Firebase UID.
+                # So, we might need to adjust what 'id' means in student_data or add firebase_uid to it explicitly if not already.
+                # The get_student_by_firebase_uid returns the Firestore doc which includes its own 'id'.
+                # Let's ensure student_data for template has 'id' as firebase_uid.
+                student_data_from_db['id'] = firestore_user_id # Override Firestore doc ID with Firebase UID for template context
+                student_data_from_db.setdefault('firebase_uid', firestore_user_id)
+
+            else:
+                logger.warning(f"No student document found in Firestore for Firebase UID: {firestore_user_id}. User is authenticated but profile data might be missing.")
+                student_data_from_db = {
+                    "id": firestore_user_id, "firebase_uid": firestore_user_id, "name": current_user.get("name", "New User"),
+                    "email": current_user.get("email", "N/A"),
+                    "profile_picture": "/static/images/default-avatar.png", "status": "active_no_profile_firebase_uid_not_found_in_students"
+                }
+        except Exception as e:
+            logger.error(f"Firestore error while fetching student by Firebase UID {firestore_user_id}: {e}")
+            # Fallback on error
+            student_data_from_db = None
+
+    # Fallback to mock data if Firestore data isn't available or failed
+    if student_data_from_db is None:
+        logger.info(f"Falling back to mock data for student ID: {firestore_user_id}")
+        # Try to get from mock store using firestore_user_id, or create a default mock
+        student_data = students_data.get(firestore_user_id, {
+            "id": firestore_user_id,
+            "name": current_user.get("name", "Mock User"),
+            "email": current_user.get("email", "mock@example.com"),
+            "profile_picture": "/static/images/default-avatar.png",
+            "level": 12, "current_xp": 2450, "xp_to_next_level": 500,
+            "current_streak": 7, "longest_streak": 15, "global_rank": 156, "rank_change": "+3"
+        })
+        if firestore_user_id not in students_data: # Store if it's a new mock entry
+             students_data[firestore_user_id] = student_data
+    else:
+        student_data = student_data_from_db
     
     # Comprehensive dashboard data
     dashboard_data = {
@@ -124,38 +178,39 @@ async def dashboard(request: Request, student_id: str = None):
     }
     
     return templates.TemplateResponse(request, "dashboard_new.html", {
-        "student_id": student_id,
+        "student_id": firestore_user_id, # Pass the authenticated user's ID
         "student_data": student_data,
-        "dashboard_data": dashboard_data
+        "dashboard_data": dashboard_data, # This is still generic mock data
+        "current_user_jwt": current_user # Pass the raw JWT payload if needed by template
     })
 
 @router.post("/start-quiz", response_class=HTMLResponse)
-async def start_quiz(request: Request, student_id: str = Form(...)):
-    """Start assessment quiz"""
-    if not student_id.strip():
-        return templates.TemplateResponse(request, "index.html", {"error": "Please enter your name or student ID"})
+async def start_quiz(request: Request, current_user: Dict[str, Any] = Depends(get_current_active_user)): # Added Auth
+    """Start assessment quiz. Now requires authentication."""
+    firestore_user_id = current_user["sub"]
     
-    # Store student data
-    students_data[student_id] = {
-        "name": student_id,
+    # Store student data (mock)
+    students_data[firestore_user_id] = { # Use firestore_user_id as key
+        "name": current_user.get("name", firestore_user_id), # Get name from token
         "start_time": datetime.now().isoformat()
     }
     
-    return templates.TemplateResponse(request, "quiz.html", {"student_id": student_id})
+    return templates.TemplateResponse(request, "quiz.html", {"student_id": firestore_user_id, "current_user_jwt": current_user})
 
 @router.post("/submit-quiz", response_class=HTMLResponse)
-async def submit_quiz(
+async def submit_quiz_html( # Renamed to avoid conflict
     request: Request, 
-    student_id: str = Form(...), 
     q1: str = Form(...), 
     q2: str = Form(...),
-    q3: str = Form(...)
+    q3: str = Form(...),
+    current_user: Dict[str, Any] = Depends(get_current_active_user) # Added Auth
 ):
-    """Submit quiz and generate learning path"""
+    """Submit quiz and generate learning path. Now requires authentication."""
+    firestore_user_id = current_user["sub"]
     try:
-        # Store quiz results
+        # Store quiz results (mock)
         answers = {"q1": q1, "q2": q2, "q3": q3}
-        quiz_results[student_id] = {
+        quiz_results[firestore_user_id] = { # Use firestore_user_id as key
             "answers": answers,
             "submitted_at": datetime.now().isoformat()
         }
@@ -186,24 +241,41 @@ async def submit_quiz(
         correct_answers = sum(1 for ans in [q1 == "A", q2 == "A", q3 == "A"] if ans)
         score_percentage = (correct_answers / 3) * 100
         
-        return templates.TemplateResponse(request, "learning_path_new.html", {"student_id": student_id,
+        return templates.TemplateResponse(request, "learning_path_new.html", {"student_id": firestore_user_id,
             "topics": weaknesses,
             "strengths": strengths,
             "score": score_percentage,
             "total_questions": 3,
-            "correct_answers": correct_answers})
+            "correct_answers": correct_answers,
+            "current_user_jwt": current_user
+            })
         
     except Exception as e:
-        return templates.TemplateResponse(request, "quiz.html", {"student_id": student_id,
-            "error": "An error occurred while processing your quiz. Please try again."})
+        logger.error(f"Error submitting quiz for student {firestore_user_id}: {e}")
+        return templates.TemplateResponse(request, "quiz.html", {
+            "student_id": firestore_user_id,
+            "error": "An error occurred while processing your quiz. Please try again.",
+            "current_user_jwt": current_user
+            })
 
 @router.get("/api/student/{student_id}/progress", response_class=JSONResponse)
-async def get_student_progress(student_id: str):
-    """API endpoint to get student progress data"""
+async def get_student_progress_api(student_id: str, request: Request, current_user: Dict[str, Any] = Depends(get_current_active_user)): # Added Auth, Renamed
+    """
+    API endpoint to get student progress data.
+    Ensures requested student_id matches authenticated user.
+    """
+    authenticated_user_id = current_user["sub"]
+
+    if student_id != authenticated_user_id:
+        raise HTTPException(status_code=403, detail="Forbidden: You can only access your own progress.")
+
+    target_student_id = authenticated_user_id
+
     try:
-        # Mock progress data (replace with database query)
+        # Mock progress data (replace with database query for target_student_id)
+        logger.info(f"Fetching progress for student {target_student_id} via API.")
         progress = {
-            "student_id": student_id,
+            "student_id": target_student_id,
             "topics": [
                 {"name": "Linear Equations", "progress": 85, "status": "completed"},
                 {"name": "Quadratic Functions", "progress": 60, "status": "in_progress"},
@@ -218,8 +290,9 @@ async def get_student_progress(student_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/study/{topic}", response_class=HTMLResponse)
-async def study_topic(request: Request, topic: str, student_id: str = None):
-    """Study page for specific topic"""
+async def study_topic(request: Request, topic: str, current_user: Dict[str, Any] = Depends(get_current_active_user)): # Added Auth
+    """Study page for specific topic. Now requires authentication."""
+    firestore_user_id = current_user["sub"]
     topic_content = {
         "quadratic_factoring": {
             "title": "Quadratic Factoring",
@@ -259,9 +332,9 @@ async def study_topic(request: Request, topic: str, student_id: str = None):
     })
     
     return templates.TemplateResponse(request, "study.html", {"topic": content,
-        "student_id": student_id})
+        "student_id": firestore_user_id, "current_user_jwt": current_user})
 
-@router.get("/health")
+@router.get("/health") # Public route, no auth needed
 async def health_check():
     """Comprehensive health check endpoint"""
     from datetime import datetime
@@ -295,6 +368,13 @@ async def register_page(request: Request, plan: str = "starter"):
         "selected_plan": plan
     })
 
+@router.get("/forgot-password", response_class=HTMLResponse)
+async def forgot_password_page(request: Request):
+    """Forgot password page"""
+    return templates.TemplateResponse(request, "forgot_password.html", {
+        "page_title": "Forgot Password"
+    })
+
 @router.get("/demo", response_class=HTMLResponse)
 async def demo_page(request: Request):
     """Demo page showing platform features"""
@@ -326,34 +406,76 @@ async def university_exam_page(request: Request):
     })
 
 @router.get("/learning", response_class=HTMLResponse)
-async def learning_page(request: Request, student_id: str = "student"):
-    """Your Learning dashboard page"""
-    return templates.TemplateResponse(request, "dashboard_new.html", {
+async def learning_page(request: Request, current_user: Dict[str, Any] = Depends(get_current_active_user)): # Added Auth
+    """Your Learning dashboard page. Now requires authentication."""
+    firestore_user_id = current_user["sub"]
+
+    # Similar to /dashboard, fetch real student data if available
+    student_data_from_db = None
+    if _firestore_client_available:
+        try:
+            firestore_client: FirestoreClient = get_firestore_client()
+            # Use Firebase UID (from token's 'sub' claim) to fetch student document
+            student_doc = firestore_client.get_student_by_firebase_uid(firebase_uid=firestore_user_id)
+            if student_doc:
+                student_data_from_db = student_doc
+                student_data_from_db.setdefault("name", current_user.get("name", "Learner"))
+                student_data_from_db.setdefault("email", current_user.get("email", "N/A"))
+                student_data_from_db['id'] = firestore_user_id # Ensure 'id' in template context is Firebase UID
+                student_data_from_db.setdefault('firebase_uid', firestore_user_id)
+            else: # Authenticated but no profile in students collection for this firebase_uid
+                logger.warning(f"No student document found in Firestore for Firebase UID: {firestore_user_id} (for /learning).")
+                student_data_from_db = {
+                    "id": firestore_user_id, "firebase_uid": firestore_user_id,
+                    "name": current_user.get("name", "New Learner"),
+                    "email": current_user.get("email", "N/A"),
+                    "status": "active_no_profile_firebase_uid_not_found_in_students"
+                }
+        except Exception as e:
+            logger.error(f"Firestore error fetching student by Firebase UID {firestore_user_id} for /learning: {e}")
+            student_data_from_db = {
+                "id": firestore_user_id, "firebase_uid": firestore_user_id,
+                "name": "Error User", "email": current_user.get("email", "N/A"), "error": str(e)
+            }
+
+    # Fallback to minimal data from token if DB interaction failed or no record
+    student_data = student_data_from_db if student_data_from_db else {
+        "id": firestore_user_id, "firebase_uid": firestore_user_id,
+        "name": current_user.get("name", "Learner"), "email": current_user.get("email", "N/A")
+    }
+
+    return templates.TemplateResponse(request, "dashboard_new.html", { # dashboard_new.html is used as a generic layout
         "page_title": "Your Learning",
-        "student_id": student_id,
-        "learning_mode": True
+        "student_id": firestore_user_id, # This should be Firebase UID for template
+        "student_data": student_data,
+        "learning_mode": True,
+        "current_user_jwt": current_user
     })
 
-# API endpoints for the new dashboard features
+# API endpoints for the new dashboard features - apply auth
 
 @router.post("/api/ai-chat", response_class=JSONResponse)
-async def ai_chat(request: Request):
-    """Handle AI assistant chat messages using Google AI SDK"""
+async def ai_chat_api(request: Request, current_user: Dict[str, Any] = Depends(get_current_active_user)): # Added Auth, Renamed
+    """Handle AI assistant chat messages. Now requires authentication."""
+    firestore_user_id = current_user["sub"]
+    user_name = current_user.get("name", "Student")
     try:
         data = await request.json()
         user_message = data.get("message", "")
         
         if not user_message:
-            return {"error": "Message is required"}
+            raise HTTPException(status_code=400, detail="Message is required")
         
         # Get AI client for intelligent responses
         try:
-            from core.ai_client import get_ai_client
+            from core.ai_client import get_ai_client # Ensure this is importable
             ai_client = get_ai_client()
             
-            # Generate context-aware response
+            # Generate context-aware response, including user ID and name
             context = {
-                "user_type": "student",
+                "user_id": firestore_user_id,
+                "user_name": user_name,
+                "user_type": "student", # Could be enhanced based on user profile
                 "session_type": "chat_assistance",
                 "timestamp": datetime.now().isoformat()
             }
@@ -415,13 +537,25 @@ async def ai_chat(request: Request):
         logger.error(f"Error in AI chat: {str(e)}")
         return {"error": "Sorry, I couldn't process your message. Please try again."}
 
-@router.get("/api/daily-planner/{student_id}", response_class=JSONResponse)
-async def get_daily_planner(student_id: str, date: str = None):
-    """Get daily planner data for a specific date"""
+@router.get("/api/daily-planner/{student_id}", response_class=JSONResponse) # student_id in path is now mainly for explicit API clarity if kept
+async def get_daily_planner_api(student_id: str, # Renamed
+                            request: Request,
+                            date: str = None,
+                            current_user: Dict[str, Any] = Depends(get_current_active_user)): # Added Auth
+    """Get daily planner data for a specific date. Now requires authentication."""
+    authenticated_user_id = current_user["sub"]
+
+    if student_id != authenticated_user_id: # Ensure user is requesting their own data
+        raise HTTPException(status_code=403, detail="Forbidden: You can only access your own daily planner.")
+
+    target_student_id = authenticated_user_id
+
     try:
-        # Mock planner data (replace with database query)
+        # Mock planner data (replace with database query for target_student_id)
+        logger.info(f"Fetching daily planner for user {target_student_id}, date {date}")
         planner_data = {
             "date": date or datetime.now().strftime("%Y-%m-%d"),
+            "student_id": target_student_id,
             "sessions": [
                 {
                     "id": 1,
@@ -459,14 +593,16 @@ async def get_daily_planner(student_id: str, date: str = None):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/api/daily-planner/update-session", response_class=JSONResponse)
-async def update_planner_session(request: Request):
-    """Update a planner session (mark as completed, reschedule, etc.)"""
+async def update_planner_session_api(request: Request, current_user: Dict[str, Any] = Depends(get_current_active_user)): # Added Auth, renamed
+    """Update a planner session. Now requires authentication."""
+    firestore_user_id = current_user["sub"]
     try:
         data = await request.json()
         session_id = data.get("session_id")
-        action = data.get("action")  # "complete", "reschedule", "cancel"
+        action = data.get("action")
         
-        # Mock update logic (replace with database update)
+        # Mock update logic (replace with database update, ensuring session_id belongs to firestore_user_id)
+        logger.info(f"User {firestore_user_id} attempting to update session {session_id} with action: {action}")
         return {
             "success": True,
             "message": f"Session {session_id} {action}d successfully",
@@ -479,11 +615,19 @@ async def update_planner_session(request: Request):
     except Exception as e:
         return {"error": "Failed to update session"}
 
-@router.get("/api/progress-charts/{student_id}", response_class=JSONResponse)
-async def get_progress_charts(student_id: str):
-    """Get chart data for progress visualization"""
+@router.get("/api/progress-charts/{student_id}", response_class=JSONResponse) # student_id in path
+async def get_progress_charts_api(student_id: str, # Renamed
+                              request: Request,
+                              current_user: Dict[str, Any] = Depends(get_current_active_user)): # Added Auth
+    """Get chart data for progress visualization. Now requires authentication."""
+    authenticated_user_id = current_user["sub"]
+    if student_id != authenticated_user_id:
+        raise HTTPException(status_code=403, detail="Forbidden: You can only access your own charts.")
+    target_student_id = authenticated_user_id
+
     try:
-        # Mock chart data (replace with actual calculations)
+        # Mock chart data (replace with actual calculations for target_student_id)
+        logger.info(f"Fetching progress charts for user {target_student_id}")
         chart_data = {
             "weekly_progress": {
                 "labels": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
@@ -505,11 +649,19 @@ async def get_progress_charts(student_id: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.get("/api/gamification/{student_id}", response_class=JSONResponse)
-async def get_gamification_data(student_id: str):
-    """Get gamification data including XP, streaks, and achievements"""
+@router.get("/api/gamification/{student_id}", response_class=JSONResponse) # student_id in path
+async def get_gamification_data_api(student_id: str, # Renamed
+                                request: Request,
+                                current_user: Dict[str, Any] = Depends(get_current_active_user)): # Added Auth
+    """Get gamification data. Now requires authentication."""
+    authenticated_user_id = current_user["sub"]
+    if student_id != authenticated_user_id:
+        raise HTTPException(status_code=403, detail="Forbidden: You can only access your own gamification data.")
+    target_student_id = authenticated_user_id
+
     try:
-        # Mock gamification data (replace with database query)
+        # Mock gamification data (replace with database query for target_student_id)
+        logger.info(f"Fetching gamification data for user {target_student_id}")
         gamification_data = {
             "xp": {
                 "current": 2450,
@@ -543,8 +695,9 @@ async def get_gamification_data(student_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/course/{course_id}/module/{module_id}", response_class=HTMLResponse)
-async def course_module(request: Request, course_id: str, module_id: str, student_id: str = None):
-    """Course module page with video player, AI notes, flashcards, and discussion"""
+async def course_module_page(request: Request, course_id: str, module_id: str, current_user: Dict[str, Any] = Depends(get_current_active_user)):
+    """Course module page. Now requires authentication."""
+    firebase_uid = current_user["sub"] # Changed variable name for clarity
     
     # Mock course data
     course_data = {
@@ -591,9 +744,30 @@ async def course_module(request: Request, course_id: str, module_id: str, studen
         ]
     }
     
-    # Mock student progress data
+    # Mock student progress data (conceptually, fetch for firebase_uid, course_id, module_id)
+    # If _firestore_client_available, you would fetch actual student data here using firebase_uid.
+    # For now, just ensuring the ID used in mock data is the firebase_uid.
+    student_data_for_page = {}
+    if _firestore_client_available:
+        try:
+            firestore_client: FirestoreClient = get_firestore_client()
+            student_doc = firestore_client.get_student_by_firebase_uid(firebase_uid=firebase_uid)
+            if student_doc:
+                student_data_for_page = student_doc
+                student_data_for_page['id'] = firebase_uid # Ensure template 'id' is firebase_uid
+                student_data_for_page.setdefault('name', current_user.get('name'))
+                student_data_for_page.setdefault('email', current_user.get('email'))
+            else:
+                student_data_for_page = {'id': firebase_uid, 'name': current_user.get('name', 'Learner'), 'email': current_user.get('email')}
+        except Exception as e:
+            logger.error(f"Error fetching student data for course module page: {e}")
+            student_data_for_page = {'id': firebase_uid, 'name': "Error User", 'email': current_user.get('email')}
+    else: # Fallback if firestore not available
+        student_data_for_page = {'id': firebase_uid, 'name': current_user.get('name', 'Learner'), 'email': current_user.get('email')}
+
+
     student_progress = {
-        "student_id": student_id or "demo_student",
+        "student_id": firebase_uid, # Use Firebase UID
         "course_progress": 68,
         "module_progress": 45,
         "completed_lessons": 2,
@@ -725,16 +899,17 @@ async def course_module(request: Request, course_id: str, module_id: str, studen
         "flashcards": flashcards,
         "discussion": discussion,
         "resources": resources,
-        "student_id": student_id or "demo_student"
+        "student_id": firebase_uid, # Ensure this is Firebase UID for template context
+        "student_data": student_data_for_page, # Pass more complete student data if available
+        "current_user_jwt": current_user
     })
 
 # Quiz Interface Routes
 
 @router.get("/quiz/{quiz_id}", response_class=HTMLResponse)
-async def quiz_interface(request: Request, quiz_id: str, student_id: str = None):
-    """Modern quiz interface with AI hints, timer, and navigation"""
-    if not student_id:
-        raise HTTPException(status_code=400, detail="Student ID is required")
+async def quiz_interface_page(request: Request, quiz_id: str, current_user: Dict[str, Any] = Depends(get_current_active_user)):
+    """Modern quiz interface. Now requires authentication."""
+    firebase_uid = current_user["sub"] # Changed variable name for clarity
     
     # Mock quiz data (replace with database query)
     quiz_data = {
@@ -803,19 +978,23 @@ async def quiz_interface(request: Request, quiz_id: str, student_id: str = None)
     }
     
     return templates.TemplateResponse(request, "quiz_interface.html", {
-        "student_id": student_id,
-        **quiz_data
+        "student_id": firebase_uid, # Use Firebase UID
+        **quiz_data, # Mocked quiz_data
+        "current_user_jwt": current_user
     })
 
 @router.post("/api/quiz/hints", response_class=JSONResponse)
-async def get_quiz_hints(request: Request):
-    """Get AI-powered hints for quiz questions"""
+async def get_quiz_hints_api(request: Request, current_user: Dict[str, Any] = Depends(get_current_active_user)):
+    """Get AI-powered hints for quiz questions. Now requires authentication."""
+    firebase_uid = current_user["sub"] # Changed variable name for clarity
     try:
         data = await request.json()
         quiz_id = data.get("quiz_id")
-        question_id = data.get("question_id")
+        question_id = data.get("question_id") # This is likely an index or specific ID
         question_text = data.get("question_text")
-        student_id = data.get("student_id")
+        # student_id from payload is no longer primary; use firebase_uid from token.
+
+        logger.info(f"Hint request for user {firebase_uid}, quiz {quiz_id}, question {question_id if question_id else 'unknown'}")
         
         # Try to get AI-powered hints
         try:
@@ -887,20 +1066,20 @@ async def get_quiz_hints(request: Request):
         return {"error": "Unable to get hints at this time"}
 
 @router.post("/api/quiz/save-progress", response_class=JSONResponse)
-async def save_quiz_progress(request: Request):
-    """Save quiz progress for auto-save functionality"""
+async def save_quiz_progress_api(request: Request, current_user: Dict[str, Any] = Depends(get_current_active_user)):
+    """Save quiz progress. Now requires authentication."""
+    firebase_uid = current_user["sub"] # Changed variable name for clarity
     try:
         data = await request.json()
         quiz_id = data.get("quiz_id")
-        student_id = data.get("student_id")
         answers = data.get("answers", {})
         current_question = data.get("current_question", 0)
         flagged_questions = data.get("flagged_questions", [])
         time_remaining = data.get("time_remaining")
         
-        # Save progress to database/storage
-        # In production, save to database
-        progress_key = f"quiz_progress_{quiz_id}_{student_id}"
+        # Save progress to database/storage, keyed by firebase_uid and quiz_id
+        progress_key = f"quiz_progress_{quiz_id}_{firebase_uid}"
+        logger.info(f"Saving quiz progress for user {firebase_uid}, quiz {quiz_id}.")
         progress_data = {
             "answers": answers,
             "current_question": current_question,
@@ -922,11 +1101,21 @@ async def save_quiz_progress(request: Request):
         logger.error(f"Error saving quiz progress: {str(e)}")
         return {"error": "Failed to save progress"}
 
-@router.get("/api/quiz/progress/{quiz_id}/{student_id}", response_class=JSONResponse)
-async def get_quiz_progress(quiz_id: str, student_id: str):
-    """Get saved quiz progress"""
+@router.get("/api/quiz/progress/{quiz_id}/{student_id}", response_class=JSONResponse) # student_id in path
+async def get_quiz_progress_api(quiz_id: str, student_id: str, # Renamed
+                             request: Request,
+                             current_user: Dict[str, Any] = Depends(get_current_active_user)): # Added Auth
+    """Get saved quiz progress. Now requires authentication."""
+    authenticated_firebase_uid = current_user["sub"] # Changed variable name
+    # Path parameter `student_id` here is expected to be the Firebase UID by this point.
+    if student_id != authenticated_firebase_uid:
+        raise HTTPException(status_code=403, detail="Forbidden: Cannot access this quiz progress.")
+
+    target_firebase_uid = authenticated_firebase_uid # Use this for consistency
+
     try:
-        progress_key = f"quiz_progress_{quiz_id}_{student_id}"
+        progress_key = f"quiz_progress_{quiz_id}_{target_firebase_uid}"
+        logger.info(f"Fetching quiz progress for user {target_firebase_uid}, quiz {quiz_id}.")
         progress_data = quiz_results.get(progress_key, {})
         
         return progress_data
@@ -936,16 +1125,18 @@ async def get_quiz_progress(quiz_id: str, student_id: str):
         return {"error": "Failed to load progress"}
 
 @router.post("/api/quiz/submit", response_class=JSONResponse)
-async def submit_quiz(request: Request):
-    """Submit completed quiz and calculate results"""
+async def submit_quiz_api_final(request: Request, current_user: Dict[str, Any] = Depends(get_current_active_user)):
+    """Submit completed quiz and calculate results. Now requires authentication."""
+    firebase_uid = current_user["sub"] # Changed variable name for clarity
     try:
         data = await request.json()
         quiz_id = data.get("quiz_id")
-        student_id = data.get("student_id")
         answers = data.get("answers", {})
         flagged_questions = data.get("flagged_questions", [])
         time_taken = data.get("time_taken", 0)
         
+        logger.info(f"Quiz submission for user {firebase_uid}, quiz {quiz_id}.")
+
         # Calculate quiz results
         # Mock correct answers (in production, get from database)
         correct_answers = {
@@ -977,12 +1168,12 @@ async def submit_quiz(request: Request):
         score_percentage = (correct_count / total_questions) * 100
         
         # Generate submission ID
-        submission_id = f"sub_{quiz_id}_{student_id}_{int(datetime.now().timestamp())}"
+        submission_id = f"sub_{quiz_id}_{firebase_uid}_{int(datetime.now().timestamp())}"
         
-        # Save results
+        # Save results (mocked, in prod use DB)
         quiz_results[submission_id] = {
             "quiz_id": quiz_id,
-            "student_id": student_id,
+            "student_id": firebase_uid, # Store Firebase UID
             "answers": answers,
             "question_results": question_results,
             "score": score_percentage,
@@ -1007,14 +1198,20 @@ async def submit_quiz(request: Request):
         return {"error": "Failed to submit quiz"}
 
 @router.get("/quiz/results/{submission_id}", response_class=HTMLResponse)
-async def quiz_results(request: Request, submission_id: str):
-    """Display quiz results with detailed feedback"""
+async def quiz_results_page(request: Request, submission_id: str, current_user: Dict[str, Any] = Depends(get_current_active_user)): # Renamed, Added Auth
+    """Display quiz results with detailed feedback. Now requires authentication."""
+    firebase_uid = current_user["sub"] # Changed variable name for clarity
     try:
-        results = quiz_results.get(submission_id)
+        results = quiz_results.get(submission_id) # Mock data
         if not results:
-            raise HTTPException(status_code=404, detail="Quiz results not found")
+            raise HTTPException(status_code=404, detail="Quiz results not found.")
         
-        # Get question details for results display
+        # Security check: Ensure the results being viewed belong to the authenticated user
+        if results.get("student_id") != firebase_uid: # Compare with Firebase UID from token
+            logger.warning(f"User {firebase_uid} attempted to access quiz results for {submission_id} belonging to {results.get('student_id')}")
+            raise HTTPException(status_code=403, detail="Forbidden: You can only view your own quiz results.")
+
+        # Get question details for results display (mocked)
         quiz_questions = [
             {"question_text": "Solve for x: 2x + 5 = 13", "difficulty": "easy"},
             {"question_text": "What is the slope of the line y = 3x - 2?", "difficulty": "medium"},

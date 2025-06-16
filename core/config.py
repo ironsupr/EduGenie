@@ -55,9 +55,20 @@ class Settings(BaseSettings):
     # Database
     DATABASE_URL: str = "sqlite:///./edugenie.db"
     
-    # Google Cloud / Firestore Configuration    GOOGLE_CLOUD_PROJECT_ID: Optional[str] = None
+    # Google Cloud / Firestore Configuration
+    GOOGLE_CLOUD_PROJECT_ID: Optional[str] = None # This is for backend GCP services
     FIRESTORE_SERVICE_ACCOUNT_PATH: Optional[str] = None
+    FIREBASE_ADMIN_SDK_CONFIG_PATH: Optional[str] = None # Path for Firebase Admin SDK JSON
     FIRESTORE_COLLECTION_PREFIX: str = ""  # For multi-environment support
+
+    # Firebase Frontend Configuration (to be passed to client-side JS)
+    FIREBASE_API_KEY: Optional[str] = None
+    FIREBASE_AUTH_DOMAIN: Optional[str] = None
+    FIREBASE_PROJECT_ID_FRONTEND: Optional[str] = None # Different from GOOGLE_CLOUD_PROJECT_ID if Firebase project differs from GCP project
+    FIREBASE_STORAGE_BUCKET: Optional[str] = None
+    FIREBASE_MESSAGING_SENDER_ID: Optional[str] = None
+    FIREBASE_APP_ID: Optional[str] = None
+    FIREBASE_MEASUREMENT_ID: Optional[str] = None # Optional, for Google Analytics for Firebase
     
     # Legacy Firestore settings (for backward compatibility)
     API_KEY: Optional[str] = None

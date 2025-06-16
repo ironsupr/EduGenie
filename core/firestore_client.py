@@ -396,6 +396,40 @@ class FirestoreClient:
         except Exception as e:
             logger.error(f"Error searching students by {field}={value}: {str(e)}")
             return []
+
+    def get_student_by_firebase_uid(self, firebase_uid: str) -> Optional[Dict[str, Any]]:
+        """Retrieve a student document by their Firebase UID."""
+        try:
+            students_ref = self.db.collection("students")
+            query = students_ref.where(filter=FieldFilter("firebase_uid", "==", firebase_uid)).limit(1)
+            docs = query.stream()
+
+            for doc in docs: # Should be at most one due to limit(1)
+                if doc.exists:
+                    data = doc.to_dict()
+                    data["id"] = doc.id # This is the Firestore document ID (e.g. google_xxxx)
+                    logger.info(f"Retrieved student by firebase_uid {firebase_uid}, doc_id: {doc.id}")
+                    return data
+
+            logger.warning(f"Student not found with firebase_uid: {firebase_uid}")
+            return None
+        except Exception as e:
+            logger.error(f"Error retrieving student by firebase_uid {firebase_uid}: {str(e)}")
+            return None
+
+    def update_student_by_firebase_uid(self, firebase_uid: str, updates: Dict[str, Any]) -> bool:
+        """Update a student document identified by Firebase UID."""
+        try:
+            student_doc_data = self.get_student_by_firebase_uid(firebase_uid)
+            if student_doc_data and "id" in student_doc_data:
+                firestore_doc_id = student_doc_data["id"]
+                return self.update_student(firestore_doc_id, updates)
+            else:
+                logger.error(f"Cannot update: Student not found with firebase_uid: {firebase_uid}")
+                return False
+        except Exception as e:
+            logger.error(f"Error updating student by firebase_uid {firebase_uid}: {str(e)}")
+            return False
     
     def batch_update_students(self, updates: List[Dict[str, Any]]) -> bool:
         """Batch update multiple students."""

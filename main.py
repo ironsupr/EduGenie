@@ -3,9 +3,10 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
-from frontend.web_app.routes import student_routes
-from core.oauth_routes import router as oauth_router
+# Jinja2Templates might not be needed here if this main.py is purely for backend/API routes
+# from fastapi.templating import Jinja2Templates
+from frontend.web_app.routes import student_routes # This is for the /app prefixed frontend routes
+from core.oauth_routes import auth_router, user_management_router # Updated import
 from core.config import settings
 from utils.logger import setup_logger
 from typing import Dict, Any
@@ -30,19 +31,23 @@ app.add_middleware(
 )
 
 # Mount static files
-app.mount("/static", StaticFiles(directory=settings.STATIC_DIR), name="static")
+app.mount("/static", StaticFiles(directory=settings.STATIC_DIR), name="static") # Serves global static files if any
 
-# Initialize templates
-templates = Jinja2Templates(directory=settings.TEMPLATES_DIR)
+# Templates might only be for the /app (frontend) part, or if main.py serves some root HTML
+# templates = Jinja2Templates(directory=settings.TEMPLATES_DIR)
 
-# Include router from the frontend with prefix to avoid conflicts
-app.include_router(student_routes.router, prefix="/app")
+# Include router from the frontend web_app (Jinja2 views)
+# These usually serve HTML pages and might have their own static file mounting
+app.include_router(student_routes.router, prefix="/app") # Prefixed to /app/...
+# The line below might be redundant or for serving landing page at root "/" from student_routes
+# If student_routes.router defines "/", this will conflict if not handled carefully.
+# Assuming student_routes.router has routes like /dashboard, /login etc., not just "/"
+# This line might be intended for root path "/" to be handled by student_routes's "/"
+# app.include_router(student_routes.router) # This could be problematic if it also defines /static, /login etc.
 
-# Include router without prefix for main routes (landing page, etc.)
-app.include_router(student_routes.router)
-
-# Include OAuth router
-app.include_router(oauth_router)
+# Include core API routers
+app.include_router(auth_router) # Handles /auth/login/{provider}, /auth/callback/{provider}, /auth/logout
+app.include_router(user_management_router) # Handles /api/register
 
 @app.get("/health")
 async def health_check() -> Dict[str, Any]:

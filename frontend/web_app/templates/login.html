@@ -162,6 +162,51 @@
     </footer>
 
     <script src="{{ url_for('static', path='/js/landing.js') }}"></script>
+
+    <!-- Firebase App (Core) -->
+    <script type="module">
+        // It's good practice to use type="module" for modern Firebase SDKs
+        // Firebase SDK (v9+)
+        // Replace with your actual Firebase project configuration
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY", // Replace with actual config
+            authDomain: "YOUR_AUTH_DOMAIN", // Replace with actual config
+            projectId: "YOUR_PROJECT_ID", // Replace with actual config
+            storageBucket: "YOUR_STORAGE_BUCKET", // Replace with actual config
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID", // Replace with actual config
+            appId: "YOUR_APP_ID" // Replace with actual config
+        };
+
+        // Initialize Firebase
+        // Ensure this is only called once
+        if (!window.firebaseApp) { // Check if already initialized by another script/template
+            try {
+                const { initializeApp } = await import("https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js");
+                window.firebaseApp = initializeApp(firebaseConfig);
+                console.log("Firebase app initialized for login page.");
+            } catch (e) {
+                console.error("Firebase app initialization error:", e);
+            }
+        } else {
+            console.log("Firebase app already initialized (login page).");
+        }
+    </script>
+    <!-- Firebase Authentication -->
+    <script type="module">
+        // This ensures firebaseApp is available from the previous script block
+        if (window.firebaseApp) {
+            try {
+                const { getAuth } = await import("https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js");
+                window.firebaseAuth = getAuth(window.firebaseApp);
+                console.log("Firebase Auth initialized for login page.");
+            } catch (e) {
+                console.error("Firebase Auth initialization error:", e);
+            }
+        } else {
+            console.warn("Firebase app not initialized. Auth SDK cannot be loaded (login page).");
+        }
+    </script>
+
     <script src="{{ url_for('static', path='/js/login.js') }}"></script>
 </body>
 </html>
