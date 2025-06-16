@@ -1,16 +1,18 @@
 """
-Progress Tracker Agent - Tracks and analyzes student learning progress
+Progress Tracker Agent - Tracks and analyzes student learning progress using Google AI SDK
 """
 from typing import Dict, List, Any, Optional
 from datetime import datetime, timedelta
 from utils.logger import setup_logger
 from core.models import ProgressEntry
+from core.ai_client import get_ai_client
 
 logger = setup_logger(__name__)
 
 class ProgressTracker:
     def __init__(self):
         self.logger = setup_logger(__name__)
+        self.ai_client = get_ai_client()
         self.min_pass_score = 0.7  # 70% passing threshold
 
     async def track_progress(

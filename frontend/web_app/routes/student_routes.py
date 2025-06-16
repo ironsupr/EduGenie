@@ -6,8 +6,11 @@ from fastapi.templating import Jinja2Templates
 from typing import Optional, Dict, Any
 from datetime import datetime
 import json
+from utils.logger import setup_logger
 
-templates = Jinja2Templates(directory="templates")
+logger = setup_logger(__name__)
+
+templates = Jinja2Templates(directory="frontend/web_app/templates")
 router = APIRouter()
 
 # Mock data store (replace with database in production)
@@ -280,15 +283,17 @@ async def health_check():
 @router.get("/login", response_class=HTMLResponse)
 async def login_page(request: Request):
     """Login page"""
-    return templates.TemplateResponse(request, "index.html", {"page_title": "Sign In",
-        "login_mode": True})
+    return templates.TemplateResponse(request, "login.html", {
+        "page_title": "Sign In"
+    })
 
 @router.get("/register", response_class=HTMLResponse)
 async def register_page(request: Request, plan: str = "starter"):
     """Registration page with plan selection"""
-    return templates.TemplateResponse(request, "index.html", {"page_title": "Get Started",
-        "register_mode": True,
-        "selected_plan": plan})
+    return templates.TemplateResponse(request, "register.html", {
+        "page_title": "Get Started",
+        "selected_plan": plan
+    })
 
 @router.get("/demo", response_class=HTMLResponse)
 async def demo_page(request: Request):
@@ -302,43 +307,112 @@ async def contact_page(request: Request):
     return templates.TemplateResponse(request, "index.html", {"page_title": "Contact Sales",
         "contact_mode": True})
 
+@router.get("/courses", response_class=HTMLResponse)
+async def courses_page(request: Request):
+    """Our Courses page"""
+    return templates.TemplateResponse(request, "dashboard_new.html", {
+        "page_title": "Our Courses",
+        "student_id": "student",
+        "courses_mode": True
+    })
+
+@router.get("/university-exam", response_class=HTMLResponse)
+async def university_exam_page(request: Request):
+    """University Exam preparation page"""
+    return templates.TemplateResponse(request, "dashboard_new.html", {
+        "page_title": "University Exam Preparation",
+        "student_id": "student",
+        "exam_mode": True
+    })
+
+@router.get("/learning", response_class=HTMLResponse)
+async def learning_page(request: Request, student_id: str = "student"):
+    """Your Learning dashboard page"""
+    return templates.TemplateResponse(request, "dashboard_new.html", {
+        "page_title": "Your Learning",
+        "student_id": student_id,
+        "learning_mode": True
+    })
+
 # API endpoints for the new dashboard features
 
 @router.post("/api/ai-chat", response_class=JSONResponse)
 async def ai_chat(request: Request):
-    """Handle AI assistant chat messages"""
+    """Handle AI assistant chat messages using Google AI SDK"""
     try:
         data = await request.json()
         user_message = data.get("message", "")
         
-        # Mock AI responses (replace with actual AI integration)
-        ai_responses = {
-            "study tips": "Here are some effective study techniques: 1) Use active recall, 2) Practice spaced repetition, 3) Take regular breaks, 4) Create mind maps for complex topics.",
-            "schedule": "Based on your current progress, I recommend focusing on Physics for the next 2 hours, then reviewing Chemistry concepts.",
-            "motivation": "You're doing great! Your 7-day streak shows real dedication. Keep up the excellent work!",
-            "help": "I can help you with study planning, concept explanations, motivation, and tracking your progress. What would you like to work on?",
-            "default": "I understand you're asking about studying. Could you be more specific about what you'd like help with?"
-        }
+        if not user_message:
+            return {"error": "Message is required"}
         
-        # Simple keyword matching for demo
-        response_key = "default"
-        user_lower = user_message.lower()
-        for key in ai_responses:
-            if key in user_lower:
-                response_key = key
-                break
-        
-        return {
-            "response": ai_responses[response_key],
-            "timestamp": datetime.now().isoformat(),
-            "suggestions": [
-                "Give me study tips",
-                "Help me plan my schedule",
-                "I need motivation",
-                "Explain this concept"
-            ]
-        }
+        # Get AI client for intelligent responses
+        try:
+            from core.ai_client import get_ai_client
+            ai_client = get_ai_client()
+            
+            # Generate context-aware response
+            context = {
+                "user_type": "student",
+                "session_type": "chat_assistance",
+                "timestamp": datetime.now().isoformat()
+            }
+            
+            # Get AI-powered response
+            chat_response = await ai_client.create_interactive_chat_response(user_message, context)
+            
+            return {
+                "response": chat_response.get("response", "I'm here to help with your studies!"),
+                "suggestions": chat_response.get("suggestions", [
+                    "Ask about a specific topic",
+                    "Request practice problems", 
+                    "Get study tips"
+                ]),
+                "follow_up_questions": chat_response.get("follow_up_questions", [
+                    "What subject are you working on?",
+                    "Do you need help with homework?"
+                ]),
+                "timestamp": chat_response.get("timestamp", datetime.now().isoformat()),
+                "source": "ai_powered"
+            }
+            
+        except Exception as ai_error:
+            # Fallback to predefined responses if AI fails
+            logger.warning(f"AI chat failed: {str(ai_error)}. Using fallback responses.")
+            
+            # Fallback AI responses for common keywords
+            ai_responses = {
+                "study tips": "Here are some effective study techniques: 1) Use active recall, 2) Practice spaced repetition, 3) Take regular breaks, 4) Create mind maps for complex topics.",
+                "schedule": "Based on your current progress, I recommend focusing on your most challenging subjects first when your energy is highest.",
+                "motivation": "You're doing great! Every small step forward is progress. Keep up the excellent work!",
+                "help": "I can help you with study planning, concept explanations, motivation, and tracking your progress. What would you like to work on?",
+                "math": "Math can be challenging, but breaking problems into smaller steps makes them more manageable. What specific math topic are you working on?",
+                "science": "Science is all about understanding how things work! What science concept would you like to explore?",
+                "default": "I understand you're asking about studying. Could you be more specific about what you'd like help with?"
+            }
+            
+            # Simple keyword matching for fallback
+            response_key = "default"
+            user_lower = user_message.lower()
+            for key in ai_responses:
+                if key in user_lower:
+                    response_key = key
+                    break
+            
+            return {
+                "response": ai_responses[response_key],
+                "timestamp": datetime.now().isoformat(),
+                "suggestions": [
+                    "Give me study tips",
+                    "Help me plan my schedule",
+                    "I need motivation",
+                    "Explain this concept"
+                ],
+                "source": "fallback"
+            }
+            
     except Exception as e:
+        logger.error(f"Error in AI chat: {str(e)}")
         return {"error": "Sorry, I couldn't process your message. Please try again."}
 
 @router.get("/api/daily-planner/{student_id}", response_class=JSONResponse)
@@ -653,3 +727,319 @@ async def course_module(request: Request, course_id: str, module_id: str, studen
         "resources": resources,
         "student_id": student_id or "demo_student"
     })
+
+# Quiz Interface Routes
+
+@router.get("/quiz/{quiz_id}", response_class=HTMLResponse)
+async def quiz_interface(request: Request, quiz_id: str, student_id: str = None):
+    """Modern quiz interface with AI hints, timer, and navigation"""
+    if not student_id:
+        raise HTTPException(status_code=400, detail="Student ID is required")
+    
+    # Mock quiz data (replace with database query)
+    quiz_data = {
+        "quiz_id": quiz_id,
+        "quiz_title": "Mathematics Assessment",
+        "quiz_subject": "Algebra & Functions",
+        "time_limit": 45,  # minutes
+        "ai_hints_enabled": True,
+        "questions": [
+            {
+                "question_text": "Solve for x: 2x + 5 = 13",
+                "difficulty": "easy",
+                "question_image": None,
+                "options": [
+                    {"label": "A", "text": "x = 4", "value": "A"},
+                    {"label": "B", "text": "x = 6", "value": "B"},
+                    {"label": "C", "text": "x = 8", "value": "C"},
+                    {"label": "D", "text": "x = 9", "value": "D"}
+                ]
+            },
+            {
+                "question_text": "What is the slope of the line y = 3x - 2?",
+                "difficulty": "medium",
+                "question_image": None,
+                "options": [
+                    {"label": "A", "text": "3", "value": "A"},
+                    {"label": "B", "text": "-2", "value": "B"},
+                    {"label": "C", "text": "1", "value": "C"},
+                    {"label": "D", "text": "5", "value": "D"}
+                ]
+            },
+            {
+                "question_text": "Factor the expression: x² - 9",
+                "difficulty": "hard",
+                "question_image": None,
+                "options": [
+                    {"label": "A", "text": "(x - 3)(x + 3)", "value": "A"},
+                    {"label": "B", "text": "(x - 9)(x + 1)", "value": "B"},
+                    {"label": "C", "text": "(x - 3)²", "value": "C"},
+                    {"label": "D", "text": "Cannot be factored", "value": "D"}
+                ]
+            },
+            {
+                "question_text": "If f(x) = 2x + 1, what is f(5)?",
+                "difficulty": "easy",
+                "question_image": None,
+                "options": [
+                    {"label": "A", "text": "11", "value": "A"},
+                    {"label": "B", "text": "10", "value": "B"},
+                    {"label": "C", "text": "9", "value": "C"},
+                    {"label": "D", "text": "6", "value": "D"}
+                ]
+            },
+            {
+                "question_text": "Which graph represents a linear function?",
+                "difficulty": "medium",
+                "question_image": "/static/images/quiz/graph-options.png",
+                "options": [
+                    {"label": "A", "text": "Straight line", "value": "A"},
+                    {"label": "B", "text": "Parabola", "value": "B"},
+                    {"label": "C", "text": "Circle", "value": "C"},
+                    {"label": "D", "text": "Hyperbola", "value": "D"}
+                ]
+            }
+        ]
+    }
+    
+    return templates.TemplateResponse(request, "quiz_interface.html", {
+        "student_id": student_id,
+        **quiz_data
+    })
+
+@router.post("/api/quiz/hints", response_class=JSONResponse)
+async def get_quiz_hints(request: Request):
+    """Get AI-powered hints for quiz questions"""
+    try:
+        data = await request.json()
+        quiz_id = data.get("quiz_id")
+        question_id = data.get("question_id")
+        question_text = data.get("question_text")
+        student_id = data.get("student_id")
+        
+        # Try to get AI-powered hints
+        try:
+            from core.ai_client import get_ai_client
+            ai_client = get_ai_client()
+            
+            hint_request = {
+                "question_text": question_text,
+                "hint_type": "learning_hint",
+                "difficulty_level": "progressive"
+            }
+            
+            ai_response = await ai_client.generate_learning_hint(hint_request)
+            
+            return {
+                "hint": ai_response.get("hint", "Break down the problem step by step."),
+                "explanation": ai_response.get("explanation", ""),
+                "learning_tip": ai_response.get("learning_tip", ""),
+                "source": "ai_powered"
+            }
+            
+        except Exception as ai_error:
+            logger.warning(f"AI hints failed: {str(ai_error)}. Using fallback hints.")
+            
+            # Fallback hints based on question patterns
+            fallback_hints = {
+                "solve for x": {
+                    "hint": "Isolate the variable x by performing the same operation on both sides of the equation.",
+                    "explanation": "Remember the golden rule: whatever you do to one side, you must do to the other side.",
+                    "learning_tip": "Work backwards from the variable - what operations are being done to x?"
+                },
+                "slope": {
+                    "hint": "In the equation y = mx + b, the coefficient of x is the slope.",
+                    "explanation": "The slope-intercept form is y = mx + b, where m is the slope and b is the y-intercept.",
+                    "learning_tip": "Memorize the slope-intercept form - it's one of the most useful forms in algebra!"
+                },
+                "factor": {
+                    "hint": "Look for patterns like difference of squares: a² - b² = (a-b)(a+b).",
+                    "explanation": "x² - 9 can be written as x² - 3², which is a difference of squares.",
+                    "learning_tip": "Common factoring patterns save time - learn to recognize them!"
+                },
+                "function": {
+                    "hint": "Substitute the given value for x in the function and calculate.",
+                    "explanation": "f(5) means substitute x = 5 into the function f(x) = 2x + 1.",
+                    "learning_tip": "Function notation f(x) just means 'plug in x and calculate the result'."
+                }
+            }
+            
+            # Simple keyword matching for fallback hints
+            hint_key = "default"
+            question_lower = question_text.lower()
+            for key in fallback_hints:
+                if key in question_lower:
+                    hint_key = key
+                    break
+            
+            if hint_key in fallback_hints:
+                return {**fallback_hints[hint_key], "source": "fallback"}
+            else:
+                return {
+                    "hint": "Read the question carefully and identify what you're being asked to find.",
+                    "explanation": "Break the problem into smaller steps and work through each part.",
+                    "learning_tip": "Don't panic! Take your time and use the strategies you've learned.",
+                    "source": "fallback"
+                }
+                
+    except Exception as e:
+        logger.error(f"Error getting quiz hints: {str(e)}")
+        return {"error": "Unable to get hints at this time"}
+
+@router.post("/api/quiz/save-progress", response_class=JSONResponse)
+async def save_quiz_progress(request: Request):
+    """Save quiz progress for auto-save functionality"""
+    try:
+        data = await request.json()
+        quiz_id = data.get("quiz_id")
+        student_id = data.get("student_id")
+        answers = data.get("answers", {})
+        current_question = data.get("current_question", 0)
+        flagged_questions = data.get("flagged_questions", [])
+        time_remaining = data.get("time_remaining")
+        
+        # Save progress to database/storage
+        # In production, save to database
+        progress_key = f"quiz_progress_{quiz_id}_{student_id}"
+        progress_data = {
+            "answers": answers,
+            "current_question": current_question,
+            "flagged_questions": flagged_questions,
+            "time_remaining": time_remaining,
+            "last_saved": datetime.now().isoformat()
+        }
+        
+        # For now, store in memory (replace with database in production)
+        quiz_results[progress_key] = progress_data
+        
+        return {
+            "success": True,
+            "message": "Progress saved successfully",
+            "timestamp": datetime.now().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Error saving quiz progress: {str(e)}")
+        return {"error": "Failed to save progress"}
+
+@router.get("/api/quiz/progress/{quiz_id}/{student_id}", response_class=JSONResponse)
+async def get_quiz_progress(quiz_id: str, student_id: str):
+    """Get saved quiz progress"""
+    try:
+        progress_key = f"quiz_progress_{quiz_id}_{student_id}"
+        progress_data = quiz_results.get(progress_key, {})
+        
+        return progress_data
+        
+    except Exception as e:
+        logger.error(f"Error getting quiz progress: {str(e)}")
+        return {"error": "Failed to load progress"}
+
+@router.post("/api/quiz/submit", response_class=JSONResponse)
+async def submit_quiz(request: Request):
+    """Submit completed quiz and calculate results"""
+    try:
+        data = await request.json()
+        quiz_id = data.get("quiz_id")
+        student_id = data.get("student_id")
+        answers = data.get("answers", {})
+        flagged_questions = data.get("flagged_questions", [])
+        time_taken = data.get("time_taken", 0)
+        
+        # Calculate quiz results
+        # Mock correct answers (in production, get from database)
+        correct_answers = {
+            "0": "A",  # 2x + 5 = 13, x = 4
+            "1": "A",  # slope of y = 3x - 2 is 3
+            "2": "A",  # x² - 9 = (x-3)(x+3)
+            "3": "A",  # f(5) = 2(5) + 1 = 11
+            "4": "A"   # linear function = straight line
+        }
+        
+        # Calculate score
+        total_questions = len(correct_answers)
+        correct_count = 0
+        question_results = {}
+        
+        for question_id, correct_answer in correct_answers.items():
+            user_answer = answers.get(question_id)
+            is_correct = user_answer == correct_answer
+            if is_correct:
+                correct_count += 1
+            
+            question_results[question_id] = {
+                "user_answer": user_answer,
+                "correct_answer": correct_answer,
+                "is_correct": is_correct,
+                "flagged": int(question_id) in flagged_questions
+            }
+        
+        score_percentage = (correct_count / total_questions) * 100
+        
+        # Generate submission ID
+        submission_id = f"sub_{quiz_id}_{student_id}_{int(datetime.now().timestamp())}"
+        
+        # Save results
+        quiz_results[submission_id] = {
+            "quiz_id": quiz_id,
+            "student_id": student_id,
+            "answers": answers,
+            "question_results": question_results,
+            "score": score_percentage,
+            "correct_count": correct_count,
+            "total_questions": total_questions,
+            "time_taken": time_taken,
+            "flagged_questions": flagged_questions,
+            "submitted_at": datetime.now().isoformat()
+        }
+        
+        return {
+            "success": True,
+            "submission_id": submission_id,
+            "score": score_percentage,
+            "correct_count": correct_count,
+            "total_questions": total_questions,
+            "redirect_url": f"/quiz/results/{submission_id}"
+        }
+        
+    except Exception as e:
+        logger.error(f"Error submitting quiz: {str(e)}")
+        return {"error": "Failed to submit quiz"}
+
+@router.get("/quiz/results/{submission_id}", response_class=HTMLResponse)
+async def quiz_results(request: Request, submission_id: str):
+    """Display quiz results with detailed feedback"""
+    try:
+        results = quiz_results.get(submission_id)
+        if not results:
+            raise HTTPException(status_code=404, detail="Quiz results not found")
+        
+        # Get question details for results display
+        quiz_questions = [
+            {"question_text": "Solve for x: 2x + 5 = 13", "difficulty": "easy"},
+            {"question_text": "What is the slope of the line y = 3x - 2?", "difficulty": "medium"},
+            {"question_text": "Factor the expression: x² - 9", "difficulty": "hard"},
+            {"question_text": "If f(x) = 2x + 1, what is f(5)?", "difficulty": "easy"},
+            {"question_text": "Which graph represents a linear function?", "difficulty": "medium"}
+        ]
+        
+        # Add question details to results
+        detailed_results = []
+        for i, (q_id, result) in enumerate(results["question_results"].items()):
+            detailed_results.append({
+                **result,
+                "question_number": i + 1,
+                "question_text": quiz_questions[i]["question_text"],
+                "difficulty": quiz_questions[i]["difficulty"]
+            })
+        
+        return templates.TemplateResponse(request, "quiz_results.html", {
+            "submission_id": submission_id,
+            "results": results,
+            "detailed_results": detailed_results,
+            "performance_level": "Excellent" if results["score"] >= 90 else "Good" if results["score"] >= 70 else "Needs Improvement"
+        })
+        
+    except Exception as e:
+        logger.error(f"Error displaying quiz results: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error loading quiz results")

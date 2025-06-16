@@ -20,12 +20,11 @@
                 <nav class="navbar">
                     <div class="nav-brand">
                         <h1>🧞‍♂️ EduGenie</h1>
-                    </div>
-                    <div class="nav-menu">
-                        <a href="/dashboard?student_id={{ student_id }}" class="nav-link active">Dashboard</a>
-                        <a href="/start-quiz" class="nav-link">Take Quiz</a>
-                        <a href="#" class="nav-link">Study</a>
-                        <a href="#" class="nav-link">Progress</a>
+                    </div>                    <div class="nav-menu">
+                        <a href="/" class="nav-link">Home</a>
+                        <a href="/courses" class="nav-link">Our Courses</a>
+                        <a href="/university-exam" class="nav-link">University Exam</a>
+                        <a href="/learning" class="nav-link active">Your Learning</a>
                     </div>
                     <div class="nav-profile">
                         <div class="profile-info">
@@ -84,7 +83,7 @@
                             </div>
                             <div class="progress-bar-container">
                                 <div class="progress-bar">
-                                    <div class="progress-fill" style="width: {{ progress.completion_percentage }}%"></div>
+                                    <div class="progress-fill" style="width: '{{ progress.completion_percentage }}%'"></div>
                                 </div>
                             </div>
                             <div class="progress-details">

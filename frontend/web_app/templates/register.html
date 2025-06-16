@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ page_title or "Get Started" }} - EduGenie</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/landing.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/register.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <i class="fas fa-magic"></i>
+                <span>EduGenie</span>
+            </div>
+            <div class="nav-menu">
+                <a href="/" class="nav-link">Home</a>
+                <a href="/courses" class="nav-link">Our Courses</a>
+                <a href="/university-exam" class="nav-link">University Exam</a>
+                <a href="/learning" class="nav-link">Your Learning</a>
+            </div>
+            <div class="nav-actions">
+                <a href="/login" class="btn btn-outline">Sign In</a>
+            </div>
+            <div class="mobile-menu-toggle">
+                <i class="fas fa-bars"></i>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Register Section -->
+    <section class="register-section">
+        <div class="register-container">
+            <div class="register-content">
+                <div class="register-header">
+                    <div class="register-badge">
+                        <i class="fas fa-rocket"></i>
+                        <span>Get Started</span>
+                    </div>
+                    <h1 class="register-title">
+                        Join <span class="gradient-text">50,000+ Learners</span> 
+                        Already Transforming Their Education
+                    </h1>
+                    <p class="register-description">
+                        Create your account and start your personalized learning journey today. 
+                        No credit card required for your first 7 days.
+                    </p>
+                </div>
+
+                <div class="register-form-container">
+                    <form class="register-form" action="/api/register" method="post">
+                        <div class="form-section">
+                            <h3>Account Information</h3>
+                            
+                            <div class="form-group">
+                                <label for="full_name" class="form-label">
+                                    <i class="fas fa-user"></i>
+                                    Full Name
+                                </label>
+                                <input 
+                                    type="text" 
+                                    id="full_name" 
+                                    name="full_name" 
+                                    class="form-input" 
+                                    placeholder="Enter your full name"
+                                    required
+                                    autocomplete="name"
+                                >
+                            </div>
+
+                            <div class="form-group">
+                                <label for="email" class="form-label">
+                                    <i class="fas fa-envelope"></i>
+                                    Email Address
+                                </label>
+                                <input 
+                                    type="email" 
+                                    id="email" 
+                                    name="email" 
+                                    class="form-input" 
+                                    placeholder="Enter your email address"
+                                    required
+                                    autocomplete="email"
+                                >
+                            </div>
+
+                            <div class="form-group">
+                                <label for="password" class="form-label">
+                                    <i class="fas fa-lock"></i>
+                                    Password
+                                </label>
+                                <div class="password-input-container">
+                                    <input 
+                                        type="password" 
+                                        id="password" 
+                                        name="password" 
+                                        class="form-input" 
+                                        placeholder="Create a strong password"
+                                        required
+                                        autocomplete="new-password"
+                                        minlength="8"
+                                    >
+                                    <button type="button" class="password-toggle" onclick="togglePassword('password')">
+                                        <i class="fas fa-eye" id="password-eye"></i>
+                                    </button>
+                                </div>
+                                <div class="password-strength">
+                                    <div class="password-strength-bar">
+                                        <div class="password-strength-fill" id="password-strength-fill"></div>
+                                    </div>
+                                    <span class="password-strength-text" id="password-strength-text">Password strength</span>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="confirm_password" class="form-label">
+                                    <i class="fas fa-lock"></i>
+                                    Confirm Password
+                                </label>
+                                <input 
+                                    type="password" 
+                                    id="confirm_password" 
+                                    name="confirm_password" 
+                                    class="form-input" 
+                                    placeholder="Confirm your password"
+                                    required
+                                    autocomplete="new-password"
+                                >
+                            </div>
+                        </div>
+
+                        <div class="form-section">
+                            <h3>Learning Preferences</h3>
+                            
+                            <div class="form-group">
+                                <label for="learning_goal" class="form-label">
+                                    <i class="fas fa-target"></i>
+                                    Primary Learning Goal
+                                </label>
+                                <select id="learning_goal" name="learning_goal" class="form-select" required>
+                                    <option value="">Select your main goal</option>
+                                    <option value="skill_development">Skill Development</option>
+                                    <option value="career_advancement">Career Advancement</option>
+                                    <option value="academic_support">Academic Support</option>
+                                    <option value="exam_preparation">Exam Preparation</option>
+                                    <option value="personal_interest">Personal Interest</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="experience_level" class="form-label">
+                                    <i class="fas fa-chart-line"></i>
+                                    Experience Level
+                                </label>
+                                <div class="radio-group">
+                                    <label class="radio-option">
+                                        <input type="radio" name="experience_level" value="beginner" required>
+                                        <span class="radio-custom"></span>
+                                        <div class="radio-content">
+                                            <strong>Beginner</strong>
+                                            <span>New to most topics</span>
+                                        </div>
+                                    </label>
+                                    <label class="radio-option">
+                                        <input type="radio" name="experience_level" value="intermediate" required>
+                                        <span class="radio-custom"></span>
+                                        <div class="radio-content">
+                                            <strong>Intermediate</strong>
+                                            <span>Some experience</span>
+                                        </div>
+                                    </label>
+                                    <label class="radio-option">
+                                        <input type="radio" name="experience_level" value="advanced" required>
+                                        <span class="radio-custom"></span>
+                                        <div class="radio-content">
+                                            <strong>Advanced</strong>
+                                            <span>Experienced learner</span>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-section">
+                            <h3>Plan Selection</h3>
+                            
+                            <div class="plan-selection">
+                                <div class="plan-option {% if selected_plan == 'starter' %}selected{% endif %}" onclick="selectPlan('starter')">
+                                    <input type="radio" name="plan" value="starter" id="plan_starter" {% if selected_plan == 'starter' %}checked{% endif %}>
+                                    <div class="plan-content">
+                                        <div class="plan-header">
+                                            <h4>Starter</h4>
+                                            <div class="plan-price">Free</div>
+                                        </div>
+                                        <ul class="plan-features">
+                                            <li><i class="fas fa-check"></i> 5 assessments per month</li>
+                                            <li><i class="fas fa-check"></i> Basic learning paths</li>
+                                            <li><i class="fas fa-check"></i> Community support</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                
+                                <div class="plan-option {% if selected_plan == 'pro' %}selected{% endif %}" onclick="selectPlan('pro')">
+                                    <div class="plan-badge">Most Popular</div>
+                                    <input type="radio" name="plan" value="pro" id="plan_pro" {% if selected_plan == 'pro' %}checked{% endif %}>
+                                    <div class="plan-content">
+                                        <div class="plan-header">
+                                            <h4>Pro</h4>
+                                            <div class="plan-price">$19<span>/month</span></div>
+                                        </div>
+                                        <ul class="plan-features">
+                                            <li><i class="fas fa-check"></i> Unlimited assessments</li>
+                                            <li><i class="fas fa-check"></i> Advanced AI insights</li>
+                                            <li><i class="fas fa-check"></i> Priority support</li>
+                                            <li><i class="fas fa-check"></i> Certification prep</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-footer">
+                            <div class="terms-checkbox">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" name="terms_accepted" required>
+                                    <span class="checkbox-custom"></span>
+                                    <span>I agree to the <a href="/terms" target="_blank">Terms of Service</a> and <a href="/privacy" target="_blank">Privacy Policy</a></span>
+                                </label>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary btn-large btn-full">
+                                <i class="fas fa-rocket"></i>
+                                Create My Account
+                            </button>
+
+                            <div class="login-link">
+                                Already have an account? <a href="/login">Sign in here</a>
+                            </div>
+                        </div>
+                    </form>                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <div class="footer-brand">
+                        <i class="fas fa-magic"></i>
+                        <span>EduGenie</span>
+                    </div>
+                    <p>Transforming education through AI-powered personalized learning experiences.</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Support</h4>
+                    <ul class="footer-links">
+                        <li><a href="/help">Help Center</a></li>
+                        <li><a href="/contact">Contact</a></li>
+                        <li><a href="/docs">Documentation</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Legal</h4>
+                    <ul class="footer-links">
+                        <li><a href="/privacy">Privacy Policy</a></li>
+                        <li><a href="/terms">Terms of Service</a></li>
+                        <li><a href="/security">Security</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <div class="footer-copyright">
+                    <p>&copy; 2025 EduGenie. All rights reserved.</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="{{ url_for('static', path='/js/landing.js') }}"></script>
+    <script src="{{ url_for('static', path='/js/register.js') }}"></script>
+</body>
+</html>
