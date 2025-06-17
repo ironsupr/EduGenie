@@ -172,15 +172,47 @@ firestore_integration_complete.py
 firestore_setup_test.py
 quiz_interface_demo.py
 AUTHENTICATION_TODO.py
+final_verification.py
+fixes_summary.py
+login_navbar_verification.py
+run_and_test.py
+simple_profile_test.py
+
+# Test output files
+*test_output*
+*.output
+login_test_output.txt
+
+# Demo/example HTML files
+navbar_demo.html
+
+# Backup files
+*.backup
+.gitignore.backup
+
+# Summary and documentation files (keep important ones, ignore temporary ones)
+ENV_CLEANUP_SUMMARY.md
+ERROR_RESOLUTION_SUMMARY.md
+PROJECT_UPDATE_SUMMARY.md
+LOGIN_FIXES_SUMMARY.md
 
 # Keep important documentation
 !README.md
 !*_README.md
 !*_GUIDE.md
 !*_SETUP.md
-!*_SUMMARY.md
 !*_STRATEGY.md
 !AUTHENTICATION_NAVIGATION_COMPLETE.md
+!COURSE_MODULE_README.md
+!DATABASE_STRATEGY.md
+!FIRESTORE_AUTH_SETUP.md
+!FIRESTORE_INTEGRATION_GUIDE.md
+!FIRESTORE_SCHEMA_GUIDE.md
+!GOOGLE_AI_INTEGRATION_SUMMARY.md
+!GOOGLE_AI_SDK_GUIDE.md
+!GOOGLE_AI_SETUP.md
+!OAUTH_SETUP.md
+!USER_DATA_STORAGE_GUIDE.md
 
 # System Files
 .DS_Store
@@ -271,3 +303,93 @@ secrets.yml
 config/secrets/
 private/
 .secrets/
+
+# Additional unimportant file patterns
+# Temporary/cache directories
+.cache/
+.tmp/
+temp/
+cache/
+
+# Editor/IDE temporary files
+.vscode/settings.json.bak
+*.orig
+*.rej
+*.patch
+
+# System and application caches
+.pytest_cache/
+.coverage
+.nyc_output/
+.sass-cache/
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+
+# Package lock files (optional - remove if you want to track them)
+# package-lock.json
+# yarn.lock
+
+# Local development files
+local_settings.py
+local_config.py
+dev_settings.py
+
+# Error and access logs
+error.log
+access.log
+application.log
+
+# Large files that shouldn't be in git
+*.zip
+*.tar.gz
+*.rar
+*.7z
+*.mp4
+*.mov
+*.avi
+*.mkv
+*.mp3
+*.wav
+
+# Development and testing files that should not be tracked
+quick_*.py
+run_*.py
+check_*.py
+verify_*.py
+
+# Documentation that might be temporary
+*_FIXES_SUMMARY.md
+*_UPDATE_SUMMARY.md
+*_CLEANUP_SUMMARY.md
+*_RESOLUTION_SUMMARY.md
+
+# Project-specific temporary files
+.env.cleaned
+navbar_demo.html
+*.demo.html
+
+# IDE and development artifacts
+.vscode/launch.json.bak
+.vscode/tasks.json.bak
+
+# Additional log patterns
+*.log.*
+log_*.txt
+debug_*.txt
+error_*.txt
+
+# Node modules if any frontend dependencies are added later
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Compiled files
+*.com
+*.class
+*.dll
+*.exe
+*.o
+*.so

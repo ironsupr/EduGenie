@@ -8,21 +8,22 @@ class AuthStateManager {
         this.checkInterval = null;
         
         this.init();
-    }
-
-    async init() {
+    }    async init() {
         // Check authentication status on page load
         await this.checkAuthStatus();
         
         // Update navigation based on auth state
         this.updateNavigation();
         
+        // Set up navigation event handlers
+        this.setupNavigationHandlers();
+        
         // Set up periodic auth checks (every 5 minutes)
         this.startPeriodicCheck();
         
         // Add logout button handlers
         this.setupLogoutHandlers();
-    }    async checkAuthStatus() {
+    }async checkAuthStatus() {
         try {
             const response = await fetch('/api/me', {
                 method: 'GET',
@@ -201,6 +202,73 @@ class AuthStateManager {
         setTimeout(() => {
             notification.style.display = 'none';
         }, 3000);
+    }
+
+    setupNavigationHandlers() {
+        // Enhanced user menu dropdown handler
+        document.addEventListener('click', (e) => {
+            const userMenuToggle = e.target.closest('#nav-user-toggle, .nav-user-info');
+            const userDropdown = document.getElementById('nav-user-dropdown');
+            const mobileMenuToggle = e.target.closest('#mobile-menu-toggle, .mobile-menu-toggle');
+            const mobileMenu = document.getElementById('mobile-nav-menu');
+            
+            // Handle user dropdown toggle
+            if (userMenuToggle && userDropdown) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                // Close mobile menu if open
+                if (mobileMenu) {
+                    mobileMenu.classList.remove('show');
+                }
+                
+                // Toggle user dropdown
+                userDropdown.classList.toggle('show');
+            }
+            // Handle mobile menu toggle
+            else if (mobileMenuToggle && mobileMenu) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                // Close user dropdown if open
+                if (userDropdown) {
+                    userDropdown.classList.remove('show');
+                }
+                
+                // Toggle mobile menu
+                mobileMenu.classList.toggle('show');
+            }
+            // Close dropdowns when clicking outside
+            else {
+                if (userDropdown && !userDropdown.contains(e.target)) {
+                    userDropdown.classList.remove('show');
+                }
+                if (mobileMenu && !mobileMenu.contains(e.target)) {
+                    mobileMenu.classList.remove('show');
+                }
+            }
+        });
+        
+        // Handle escape key to close dropdowns
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                const userDropdown = document.getElementById('nav-user-dropdown');
+                const mobileMenu = document.getElementById('mobile-nav-menu');
+                
+                if (userDropdown) userDropdown.classList.remove('show');
+                if (mobileMenu) mobileMenu.classList.remove('show');
+            }
+        });
+        
+        // Handle window resize to close mobile menu
+        window.addEventListener('resize', () => {
+            if (window.innerWidth > 768) {
+                const mobileMenu = document.getElementById('mobile-nav-menu');
+                if (mobileMenu) {
+                    mobileMenu.classList.remove('show');
+                }
+            }
+        });
     }
 }
 

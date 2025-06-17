@@ -116,14 +116,13 @@ class AuthService:
                 return await self._dev_create_user(request)
             
             # Production mode would use Firestore here
-            return await self._firestore_create_user(request)
-            
+            return await self._firestore_create_user(request)            
         except Exception as e:
             logger.error(f"Error creating user: {e}")
             raise
     
     async def get_user_by_id(self, user_id: str) -> Optional[UserProfile]:
-        """Get user by ID"""
+        """Get user by ID with timeout protection"""
         try:
             # Development mode
             if self.development_mode:
@@ -132,8 +131,19 @@ class AuthService:
                     return UserProfile(**user_data)
                 return None
             
-            # Production mode would use Firestore here
-            return await self._firestore_get_user_by_id(user_id)
+            # Production mode with timeout protection
+            import asyncio
+            try:
+                # 3 second timeout for Firestore calls
+                return await asyncio.wait_for(
+                    self._firestore_get_user_by_id(user_id), 
+                    timeout=3.0
+                )
+            except asyncio.TimeoutError:
+                logger.warning(f"Firestore timeout for user {user_id}, falling back to dev mode")
+                # Fall back to development mode on timeout
+                self.development_mode = True
+                return None
             
         except Exception as e:
             logger.error(f"Error getting user by ID: {e}")

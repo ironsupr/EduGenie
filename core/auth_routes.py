@@ -2,7 +2,7 @@
 Authentication routes for traditional email/password login
 """
 from fastapi import APIRouter, HTTPException, Form, Request, Response, Depends
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, JSONResponse
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from typing import Optional
 import logging
@@ -154,6 +154,7 @@ async def register(
 
 @router.post("/api/login")
 async def login(
+    request: Request,
     email: str = Form(...),
     password: str = Form(...),
     remember_me: bool = Form(False),
@@ -161,6 +162,8 @@ async def login(
 ):
     """Handle traditional email/password login"""
     try:
+        logger.info(f"Login attempt for email: {email}")
+        
         # Create login request
         login_request = LoginRequest(
             email=email,
@@ -172,14 +175,40 @@ async def login(
         user = await auth_service.authenticate_user(login_request)
         
         if not user:
-            raise HTTPException(status_code=401, detail="Invalid email or password")
+            logger.warning(f"Authentication failed for email: {email}")
+            # Check if this is an AJAX request
+            if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+                return JSONResponse(
+                    status_code=401,
+                    content={"error": "Invalid email or password", "field": "password"}
+                )
+            else:
+                raise HTTPException(status_code=401, detail="Invalid email or password")
         
         # Create JWT token
         token = auth_service.create_jwt_token(user, remember_me=remember_me)
+        logger.info(f"JWT token created for user: {email}")
         
-        # Create response with redirect
-        response = RedirectResponse(url="/dashboard", status_code=303)
-          # Set secure cookie
+        # Determine response type
+        is_ajax = request.headers.get("X-Requested-With") == "XMLHttpRequest"
+        
+        if is_ajax:
+            # Return JSON response for AJAX
+            response = JSONResponse(content={
+                "success": True,
+                "message": "Login successful",
+                "redirect_url": "/dashboard",
+                "token": token,
+                "user": {
+                    "email": user.email,
+                    "name": user.full_name or user.email.split('@')[0]
+                }
+            })
+        else:
+            # Return redirect for form submission
+            response = RedirectResponse(url="/dashboard", status_code=303)
+        
+        # Set secure cookie
         max_age = 30 * 24 * 60 * 60 if remember_me else 7 * 24 * 60 * 60  # 30 days or 7 days
         response.set_cookie(
             key="session_token",
@@ -190,17 +219,39 @@ async def login(
             max_age=max_age
         )
         
+        # Also set a client-readable cookie for frontend auth state
+        response.set_cookie(
+            key="auth_user",
+            value=user.email,
+            httponly=False,
+            secure=False,
+            samesite="lax",
+            max_age=max_age
+        )
+        
         logger.info(f"User logged in successfully: {email}")
         return response
         
     except HTTPException:
         raise
     except ValueError as e:
-        logger.warning(f"Login failed: {e}")
-        raise HTTPException(status_code=401, detail=str(e))
+        logger.warning(f"Login validation error: {e}")
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return JSONResponse(
+                status_code=422,
+                content={"error": str(e), "field": "password"}
+            )
+        else:
+            raise HTTPException(status_code=422, detail=str(e))
     except Exception as e:
-        logger.error(f"Login error: {e}")
-        raise HTTPException(status_code=500, detail="Login failed")
+        logger.error(f"Unexpected login error: {e}")
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return JSONResponse(
+                status_code=500,
+                content={"error": "Login failed. Please try again later."}
+            )
+        else:
+            raise HTTPException(status_code=500, detail="Login failed")
 
 @router.post("/api/logout")
 async def logout():
@@ -302,3 +353,245 @@ async def require_auth(
     if not current_user:
         raise HTTPException(status_code=401, detail="Authentication required")
     return current_user
+
+
+# Profile management endpoints
+@router.put("/api/user/profile")
+async def update_user_profile(
+    request: Request,
+    current_user: UserProfile = Depends(require_auth),
+    auth_service: AuthService = Depends(get_auth_service)
+):
+    """Update user profile information"""
+    try:
+        data = await request.json()
+        
+        # Update allowed fields
+        updated_data = {}
+        allowed_fields = ['full_name', 'phone', 'location', 'timezone', 'bio', 'username']
+        
+        for field in allowed_fields:
+            if field in data:
+                updated_data[field] = data[field]
+        
+        # In development mode, update the in-memory store
+        if auth_service.development_mode:
+            user_data = auth_service.dev_users.get(current_user.user_id, {})
+            user_data.update(updated_data)
+            auth_service.dev_users[current_user.user_id] = user_data
+        else:
+            # In production, update Firestore
+            await auth_service.firestore_client.collection('users').document(current_user.user_id).update(updated_data)
+        
+        return {"message": "Profile updated successfully"}
+        
+    except Exception as e:
+        logger.error(f"Error updating profile: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to update profile")
+
+
+@router.put("/api/user/preferences")
+async def update_learning_preferences(
+    request: Request,
+    current_user: UserProfile = Depends(require_auth),
+    auth_service: AuthService = Depends(get_auth_service)
+):
+    """Update user learning preferences"""
+    try:
+        data = await request.json()
+        
+        # Update learning preferences
+        preferences_data = {}
+        allowed_fields = ['learning_goal', 'experience_level', 'preferred_subjects', 'study_schedule', 'difficulty_preference']
+        
+        for field in allowed_fields:
+            if field in data:
+                preferences_data[field] = data[field]
+        
+        # In development mode, update the in-memory store
+        if auth_service.development_mode:
+            user_data = auth_service.dev_users.get(current_user.user_id, {})
+            user_data.update(preferences_data)
+            auth_service.dev_users[current_user.user_id] = user_data
+        else:
+            # In production, update Firestore
+            await auth_service.firestore_client.collection('users').document(current_user.user_id).update(preferences_data)
+        
+        return {"message": "Learning preferences updated successfully"}
+        
+    except Exception as e:
+        logger.error(f"Error updating preferences: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to update preferences")
+
+
+@router.put("/api/user/notifications")
+async def update_notification_settings(
+    request: Request,
+    current_user: UserProfile = Depends(require_auth),
+    auth_service: AuthService = Depends(get_auth_service)
+):
+    """Update user notification settings"""
+    try:
+        data = await request.json()
+        
+        # Create notifications object if it doesn't exist
+        notifications = {}
+        allowed_settings = ['email_notifications', 'push_notifications', 'course_reminders', 'achievement_alerts', 'weekly_progress']
+        
+        for setting in allowed_settings:
+            if setting in data:
+                notifications[setting] = data[setting]
+        
+        # In development mode, update the in-memory store
+        if auth_service.development_mode:
+            user_data = auth_service.dev_users.get(current_user.user_id, {})
+            if 'notification_settings' not in user_data:
+                user_data['notification_settings'] = {}
+            user_data['notification_settings'].update(notifications)
+            auth_service.dev_users[current_user.user_id] = user_data
+        else:
+            # In production, update Firestore
+            await auth_service.firestore_client.collection('users').document(current_user.user_id).update({
+                'notification_settings': notifications
+            })
+        
+        return {"message": "Notification settings updated successfully"}
+        
+    except Exception as e:
+        logger.error(f"Error updating notifications: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to update notification settings")
+
+
+@router.post("/api/user/change-password")
+async def change_password(
+    request: Request,
+    current_user: UserProfile = Depends(require_auth),
+    auth_service: AuthService = Depends(get_auth_service)
+):
+    """Change user password"""
+    try:
+        data = await request.json()
+        current_password = data.get('current_password')
+        new_password = data.get('new_password')
+        
+        if not current_password or not new_password:
+            raise HTTPException(status_code=400, detail="Current password and new password are required")
+        
+        # Verify current password
+        login_request = LoginRequest(email=current_user.email, password=current_password)
+        authenticated_user = await auth_service.authenticate_user(login_request)
+        
+        if not authenticated_user:
+            raise HTTPException(status_code=400, detail="Current password is incorrect")
+        
+        # Update password
+        hashed_password = auth_service.hash_password(new_password)
+        
+        # In development mode, update the in-memory store
+        if auth_service.development_mode:
+            user_data = auth_service.dev_users.get(current_user.user_id, {})
+            user_data['hashed_password'] = hashed_password
+            auth_service.dev_users[current_user.user_id] = user_data
+        else:
+            # In production, update Firestore
+            await auth_service.firestore_client.collection('users').document(current_user.user_id).update({
+                'hashed_password': hashed_password
+            })
+        
+        return {"message": "Password changed successfully"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error changing password: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to change password")
+
+
+@router.post("/api/user/2fa/toggle")
+async def toggle_two_factor_auth(
+    current_user: UserProfile = Depends(require_auth),
+    auth_service: AuthService = Depends(get_auth_service)
+):
+    """Toggle two-factor authentication"""
+    try:
+        # For now, this is a mock implementation
+        # In a real app, you'd integrate with an actual 2FA service
+        
+        current_2fa_status = False  # Get from user settings
+        new_status = not current_2fa_status
+        
+        # In development mode, update the in-memory store
+        if auth_service.development_mode:
+            user_data = auth_service.dev_users.get(current_user.user_id, {})
+            user_data['two_factor_enabled'] = new_status
+            auth_service.dev_users[current_user.user_id] = user_data
+        else:
+            # In production, update Firestore
+            await auth_service.firestore_client.collection('users').document(current_user.user_id).update({
+                'two_factor_enabled': new_status
+            })
+        
+        return {
+            "message": f"2FA {'enabled' if new_status else 'disabled'} successfully",
+            "enabled": new_status
+        }
+        
+    except Exception as e:
+        logger.error(f"Error toggling 2FA: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to toggle 2FA")
+
+
+@router.post("/api/user/avatar")
+async def upload_avatar(
+    request: Request,
+    current_user: UserProfile = Depends(require_auth),
+    auth_service: AuthService = Depends(get_auth_service)
+):
+    """Upload user avatar"""
+    try:
+        # This is a mock implementation
+        # In a real app, you'd upload to cloud storage (Google Cloud Storage, AWS S3, etc.)
+        
+        # For now, just return success with a mock avatar URL
+        mock_avatar_url = f"/static/images/avatars/{current_user.user_id}.jpg"
+        
+        # In development mode, update the in-memory store
+        if auth_service.development_mode:
+            user_data = auth_service.dev_users.get(current_user.user_id, {})
+            user_data['avatar_url'] = mock_avatar_url
+            auth_service.dev_users[current_user.user_id] = user_data
+        else:
+            # In production, update Firestore
+            await auth_service.firestore_client.collection('users').document(current_user.user_id).update({
+                'avatar_url': mock_avatar_url
+            })
+        
+        return {
+            "message": "Avatar uploaded successfully",
+            "avatar_url": mock_avatar_url
+        }
+        
+    except Exception as e:
+        logger.error(f"Error uploading avatar: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to upload avatar")
+
+@router.get("/api/auth/status")
+async def auth_status(
+    request: Request,
+    current_user: Optional[UserProfile] = Depends(get_current_user)
+):
+    """Check current authentication status"""
+    if current_user:
+        return JSONResponse(content={
+            "authenticated": True,
+            "user": {
+                "email": current_user.email,
+                "name": current_user.full_name or current_user.email.split('@')[0],
+                "id": current_user.user_id
+            }
+        })
+    else:
+        return JSONResponse(content={
+            "authenticated": False,
+            "user": None
+        })

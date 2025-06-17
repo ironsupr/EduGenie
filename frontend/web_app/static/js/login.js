@@ -4,6 +4,9 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeLoginForm();
     initializeFormValidation();
     initializeOAuthButtons();
+    initializePasswordStrength();
+    initializeTooltips();
+    checkLoginState();
 });
 
 function initializeLoginForm() {
@@ -11,6 +14,120 @@ function initializeLoginForm() {
     if (!form) return;
 
     form.addEventListener('submit', handleLoginSubmit);
+    
+    // Add input event listeners for real-time validation
+    const inputs = form.querySelectorAll('.form-input');
+    inputs.forEach(input => {
+        input.addEventListener('blur', () => validateField(input));
+        input.addEventListener('input', () => clearFieldError(input));
+    });
+}
+
+function initializePasswordStrength() {
+    const passwordField = document.getElementById('password');
+    const strengthMeter = document.getElementById('password-strength');
+    
+    if (passwordField && strengthMeter) {
+        passwordField.addEventListener('input', function() {
+            const password = this.value;
+            if (password.length > 0) {
+                strengthMeter.style.display = 'block';
+                updatePasswordStrength(password);
+            } else {
+                strengthMeter.style.display = 'none';
+            }
+        });
+    }
+}
+
+function updatePasswordStrength(password) {
+    const strengthFill = document.querySelector('.strength-fill');
+    const strengthText = document.querySelector('.strength-text');
+    
+    if (!strengthFill || !strengthText) return;
+    
+    const strength = calculatePasswordStrength(password);
+    
+    strengthFill.className = `strength-fill ${strength.level}`;
+    strengthText.textContent = `Password strength: ${strength.text}`;
+}
+
+function calculatePasswordStrength(password) {
+    let score = 0;
+    let level = 'weak';
+    let text = 'Weak';
+    
+    // Length check
+    if (password.length >= 8) score += 1;
+    if (password.length >= 12) score += 1;
+    
+    // Character variety checks
+    if (/[a-z]/.test(password)) score += 1;
+    if (/[A-Z]/.test(password)) score += 1;
+    if (/[0-9]/.test(password)) score += 1;
+    if (/[^A-Za-z0-9]/.test(password)) score += 1;
+    
+    // Determine strength level
+    if (score >= 5) {
+        level = 'strong';
+        text = 'Strong';
+    } else if (score >= 4) {
+        level = 'good';
+        text = 'Good';
+    } else if (score >= 2) {
+        level = 'fair';
+        text = 'Fair';
+    }
+    
+    return { level, text, score };
+}
+
+function initializeTooltips() {
+    // Add tooltips for better UX
+    const rememberCheckbox = document.getElementById('remember_me');
+    if (rememberCheckbox) {
+        rememberCheckbox.addEventListener('change', function() {
+            if (this.checked) {
+                showTooltip(this, 'You\'ll stay signed in for 30 days on this device');
+            }
+        });
+    }
+}
+
+function checkLoginState() {
+    // Check if user is already logged in
+    const token = localStorage.getItem('authToken') || getCookie('auth_token') || getCookie('session_token');
+    const authUser = getCookie('auth_user');
+    
+    if (token || authUser) {
+        // Verify with server
+        fetch('/api/auth/status', {
+            credentials: 'same-origin',
+            headers: {
+                'Authorization': token ? `Bearer ${token}` : ''
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.authenticated) {
+                showInfoMessage(`You are already signed in as ${data.user.name}. Redirecting to dashboard...`);
+                setTimeout(() => {
+                    window.location.href = '/dashboard';
+                }, 2000);
+            } else {
+                // Clear invalid tokens
+                localStorage.removeItem('authToken');
+                if (getCookie('auth_token')) {
+                    setCookie('auth_token', '', -1);
+                }
+            }
+        })
+        .catch(error => {
+            console.log('Auth check failed:', error);
+            // Clear potentially invalid tokens
+            localStorage.removeItem('authToken');
+        });
+    }
 }
 
 async function handleLoginSubmit(e) {
@@ -26,32 +143,135 @@ async function handleLoginSubmit(e) {
     }
     
     // Show loading state
-    submitBtn.classList.add('loading');
-    submitBtn.disabled = true;
+    setButtonLoading(submitBtn, true);
+    hideMessages(); // Clear any previous messages
     
     try {
+        // First attempt: AJAX request
         const response = await fetch(form.action, {
             method: 'POST',
-            body: formData
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            credentials: 'same-origin'
         });
         
-        if (response.ok) {
-            // Success - redirect to dashboard
-            showSuccessMessage('Welcome back! Redirecting to your dashboard...');
-            setTimeout(() => {
-                window.location.href = '/dashboard';
-            }, 1500);
-        } else {
-            const errorData = await response.json();
-            showErrorMessage(errorData.message || 'Invalid email or password. Please try again.');
+        // Handle response based on content type
+        const contentType = response.headers.get('content-type');
+        let data = null;
+        let isJson = false;
+        
+        if (contentType && contentType.includes('application/json')) {
+            try {
+                data = await response.json();
+                isJson = true;
+            } catch (e) {
+                console.warn('Failed to parse JSON response:', e);
+                isJson = false;
+            }
         }
+        
+        if (response.ok) {
+            // Success handling
+            if (isJson && data) {
+                // JSON response with data
+                if (data.token) {
+                    localStorage.setItem('authToken', data.token);
+                    setCookie('auth_token', data.token, 7); // 7 days
+                }
+                
+                showSuccessMessage(data.message || 'Login successful! Redirecting...');
+                
+                // Track successful login
+                trackEvent('login_success', {
+                    method: 'email',
+                    remember_me: formData.get('remember_me') === 'on'
+                });
+                
+                // Redirect after success message
+                setTimeout(() => {
+                    const redirectUrl = data.redirect_url || '/dashboard';
+                    console.log('Redirecting to:', redirectUrl);
+                    window.location.href = redirectUrl;
+                }, 1200);
+                
+            } else {
+                // Non-JSON success response (likely redirect)
+                showSuccessMessage('Login successful! Redirecting...');
+                setTimeout(() => {
+                    window.location.href = '/dashboard';
+                }, 1000);
+            }
+        } else {
+            // Error handling
+            let errorMessage = 'Login failed. Please try again.';
+            
+            if (isJson && data) {
+                errorMessage = data.error || data.detail || errorMessage;
+            } else if (response.status === 401) {
+                errorMessage = 'Invalid email or password. Please check your credentials.';
+            } else if (response.status === 422) {
+                errorMessage = 'Please check your input and try again.';
+            } else if (response.status >= 500) {
+                errorMessage = 'Server error. Please try again later.';
+            }
+            
+            showErrorMessage(errorMessage);
+            
+            // Track failed login attempt
+            trackEvent('login_failed', {
+                method: 'email',
+                error: errorMessage,
+                status: response.status
+            });
+        }
+        
     } catch (error) {
-        console.error('Login error:', error);
-        showErrorMessage('An error occurred. Please check your connection and try again.');
+        console.error('Login AJAX error:', error);
+        
+        // For network errors or other issues, fall back to form submission
+        showInfoMessage('Attempting login...');
+        
+        setTimeout(() => {
+            // Create a clean form for submission without AJAX
+            const fallbackForm = document.createElement('form');
+            fallbackForm.method = 'POST';
+            fallbackForm.action = form.action;
+            
+            // Copy form data
+            for (let [key, value] of formData.entries()) {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = key;
+                input.value = value;
+                fallbackForm.appendChild(input);
+            }
+            
+            document.body.appendChild(fallbackForm);
+            fallbackForm.submit();
+        }, 500);
+        
     } finally {
         // Remove loading state
-        submitBtn.classList.remove('loading');
-        submitBtn.disabled = false;
+        setButtonLoading(submitBtn, false);
+    }
+}
+
+function setButtonLoading(button, isLoading) {
+    const btnText = button.querySelector('.btn-text');
+    const btnLoader = button.querySelector('.btn-loader');
+    
+    if (isLoading) {
+        button.classList.add('loading');
+        button.disabled = true;
+        if (btnText) btnText.style.opacity = '0';
+        if (btnLoader) btnLoader.style.display = 'flex';
+    } else {
+        button.classList.remove('loading');
+        button.disabled = false;
+        if (btnText) btnText.style.opacity = '1';
+        if (btnLoader) btnLoader.style.display = 'none';
     }
 }
 
@@ -143,6 +363,10 @@ function showErrorMessage(message) {
     showNotification(message, 'error');
 }
 
+function showInfoMessage(message) {
+    showNotification(message, 'info');
+}
+
 function showNotification(message, type) {
     // Remove existing notifications
     const existingNotifications = document.querySelectorAll('.notification');
@@ -151,9 +375,24 @@ function showNotification(message, type) {
     // Create notification element
     const notification = document.createElement('div');
     notification.className = `notification notification-${type}`;
+    
+    let icon = 'fa-info-circle';
+    let backgroundColor = 'var(--primary)';
+    
+    if (type === 'success') {
+        icon = 'fa-check-circle';
+        backgroundColor = 'var(--success)';
+    } else if (type === 'error') {
+        icon = 'fa-exclamation-circle';
+        backgroundColor = 'var(--error)';
+    } else if (type === 'info') {
+        icon = 'fa-info-circle';
+        backgroundColor = 'var(--primary)';
+    }
+    
     notification.innerHTML = `
         <div class="notification-content">
-            <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i>
+            <i class="fas ${icon}"></i>
             <span>${message}</span>
         </div>
         <button class="notification-close" onclick="this.parentElement.remove()">
@@ -166,7 +405,7 @@ function showNotification(message, type) {
         position: fixed;
         top: 20px;
         right: 20px;
-        background: ${type === 'success' ? 'var(--success)' : 'var(--error)'};
+        background: ${backgroundColor};
         color: white;
         padding: 1rem 1.5rem;
         border-radius: var(--radius-lg);
@@ -182,13 +421,14 @@ function showNotification(message, type) {
     // Add to page
     document.body.appendChild(notification);
     
-    // Auto-remove after 5 seconds
+    // Auto-remove after appropriate time
+    const autoRemoveTime = type === 'error' ? 7000 : 5000; // Errors stay longer
     setTimeout(() => {
         if (notification.parentElement) {
             notification.style.animation = 'slideOut 0.3s ease-in';
             setTimeout(() => notification.remove(), 300);
         }
-    }, 5000);
+    }, autoRemoveTime);
 }
 
 // Add CSS for notification animations (if not already present)
@@ -279,4 +519,102 @@ async function handleOAuthLogin(provider) {
         button.disabled = false;
         button.innerHTML = originalText;
     }
+}
+
+function hideMessages() {
+    const messageContainer = document.getElementById('login-messages');
+    const successMessage = document.getElementById('success-message');
+    const errorMessage = document.getElementById('error-message');
+    
+    if (messageContainer) messageContainer.style.display = 'none';
+    if (successMessage) successMessage.style.display = 'none';
+    if (errorMessage) errorMessage.style.display = 'none';
+}
+
+function setCookie(name, value, days) {
+    const expires = new Date();
+    expires.setTime(expires.getTime() + (days * 24 * 60 * 60 * 1000));
+    document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/;SameSite=Lax`;
+}
+
+function getCookie(name) {
+    const nameEQ = name + "=";
+    const ca = document.cookie.split(';');
+    for (let i = 0; i < ca.length; i++) {
+        let c = ca[i];
+        while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+        if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
+    }
+    return null;
+}
+
+function validateField(field) {
+    if (field.type === 'email') {
+        if (field.value && isValidEmail(field.value)) {
+            showFieldSuccess(field);
+            return true;
+        } else if (field.value) {
+            showFieldError(field, 'Please enter a valid email address');
+            return false;
+        }
+    } else if (field.name === 'password') {
+        if (field.value.length >= 8) {
+            showFieldSuccess(field);
+            return true;
+        } else if (field.value) {
+            showFieldError(field, 'Password must be at least 8 characters');
+            return false;
+        }
+    }
+    return true;
+}
+
+function clearFieldError(field) {
+    field.classList.remove('error');
+    const errorMessage = field.parentNode.querySelector('.error-message');
+    if (errorMessage) {
+        errorMessage.remove();
+    }
+}
+
+function trackEvent(eventName, data = {}) {
+    // Simple event tracking - can be enhanced with analytics
+    console.log(`Event: ${eventName}`, data);
+    
+    // If Google Analytics is available
+    if (typeof gtag !== 'undefined') {
+        gtag('event', eventName, data);
+    }
+    
+    // If other analytics services are available, add here
+}
+
+function showTooltip(element, message) {
+    // Simple tooltip implementation
+    const tooltip = document.createElement('div');
+    tooltip.className = 'tooltip';
+    tooltip.textContent = message;
+    tooltip.style.cssText = `
+        position: absolute;
+        background: var(--dark);
+        color: white;
+        padding: 0.5rem;
+        border-radius: var(--radius);
+        font-size: 0.875rem;
+        z-index: 1000;
+        bottom: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        margin-bottom: 0.5rem;
+        white-space: nowrap;
+    `;
+    
+    element.style.position = 'relative';
+    element.appendChild(tooltip);
+    
+    setTimeout(() => {
+        if (tooltip.parentElement) {
+            tooltip.remove();
+        }
+    }, 3000);
 }

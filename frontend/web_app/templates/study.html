@@ -4,23 +4,47 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Study: {{ topic.title }} – EduGenie</title>
-    <link rel="stylesheet" href="/static/css/main.css">
-    <link rel="stylesheet" href="/static/css/study.css">
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/main.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/study.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/auth_nav.css') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <meta name="description" content="Study {{ topic.title }} with EduGenie - interactive lessons, examples, and practice exercises">
 </head>
 <body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="/" class="nav-brand">
+                <i class="fas fa-magic"></i>
+                <span>EduGenie</span>
+            </a>
+            <div class="nav-menu">
+                <a href="/" class="nav-link">Home</a>
+                <a href="/courses" class="nav-link">Courses</a>
+                <a href="/university-exam" class="nav-link">University Exam</a>
+                <a href="/study" class="nav-link">Study</a>
+            </div>
+            <div class="nav-actions">
+                <!-- Auth state will be dynamically updated by auth_manager.js -->
+                <a href="/login" class="btn btn-outline">Sign In</a>
+                <a href="/register" class="btn btn-primary">Get Started</a>
+            </div>
+            <div class="mobile-menu-toggle">
+                <i class="fas fa-bars"></i>
+            </div>
+        </div>
+    </nav>
+
     <div class="main-wrapper">
-        <!-- Navigation Header -->
+        <!-- Study Navigation Header -->
         <header class="study-header">
             <div class="container">
-                <nav class="navbar">                    <div class="nav-brand">
-                        <a href="/">🧞‍♂️ EduGenie</a>
-                    </div>
+                <div class="study-nav">
                     <div class="nav-breadcrumb">
                         <a href="/dashboard?student_id={{ student_id }}">Dashboard</a>
                         <span>/</span>
@@ -30,7 +54,7 @@
                         <button class="btn btn-outline btn-sm" id="bookmarkBtn">📖 Bookmark</button>
                         <button class="btn btn-outline btn-sm" id="notesBtn">📝 Notes</button>
                     </div>
-                </nav>
+                </div>
             </div>
         </header>
 
@@ -323,9 +347,9 @@
                 document.getElementById('notesPad').value = savedNotes;
             }
         });
-        
-        // Update time spent every minute
+          // Update time spent every minute
         setInterval(updateTimeSpent, 60000);
     </script>
+    <script src="{{ url_for('static', path='/js/auth_manager.js') }}"></script>
 </body>
 </html>

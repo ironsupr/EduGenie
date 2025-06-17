@@ -299,8 +299,21 @@ async def reset_password_page(request: Request, token: str):
 @router.get("/demo", response_class=HTMLResponse)
 async def demo_page(request: Request):
     """Demo page showing platform features"""
-    return templates.TemplateResponse(request, "dashboard.html", {"demo_mode": True,
-        "student_id": "demo_user"})
+    # Create mock progress data for the demo
+    demo_progress = {
+        "current_streak": 7,
+        "total_points": 2450,
+        "completed_topics": 15,
+        "total_topics": 20,
+        "weekly_hours": 28,
+        "overall_progress": 75
+    }
+    
+    return templates.TemplateResponse(request, "dashboard.html", {
+        "demo_mode": True,
+        "student_id": "demo_user",
+        "progress": demo_progress
+    })
 
 @router.get("/contact", response_class=HTMLResponse)
 async def contact_page(request: Request):
@@ -1044,3 +1057,119 @@ async def quiz_results(request: Request, submission_id: str):
     except Exception as e:
         logger.error(f"Error displaying quiz results: {str(e)}")
         raise HTTPException(status_code=500, detail="Error loading quiz results")
+
+@router.get("/profile", response_class=HTMLResponse)
+async def profile_page(
+    request: Request, 
+    current_user: Optional[UserProfile] = Depends(get_current_user)
+):
+    """User profile and settings page"""
+    try:
+        # Check if user is authenticated
+        if not current_user:
+            # Redirect to login instead of dashboard
+            return RedirectResponse(url="/login?redirect=/profile", status_code=302)
+        
+        # Generate mock user stats (replace with actual data from database)
+        user_stats = {
+            "courses_completed": 12,
+            "study_hours": 85,
+            "achievements": 8,
+            "streak_days": 7
+        }
+        
+        # Generate mock current goal (replace with actual data)
+        current_goal = {
+            "title": "Complete Python Fundamentals",
+            "progress": 65,
+            "deadline": "2024-02-15"
+        }
+        
+        context = {
+            "request": request,
+            "user": current_user,
+            "user_stats": user_stats,
+            "current_goal": current_goal
+        }
+        
+        return templates.TemplateResponse("profile.html", context)
+        
+    except Exception as e:
+        logger.error(f"Error loading profile page: {str(e)}")
+        # Redirect to login on error instead of dashboard
+        return RedirectResponse(url="/login?error=profile_error", status_code=302)
+
+# Add a simple dashboard route for testing without auth
+@router.get("/dashboard-test", response_class=HTMLResponse)
+async def dashboard_test(request: Request):
+    """Simple dashboard for testing navbar without authentication"""
+    # Mock student data for testing
+    student_data = {
+        "name": "Test User",
+        "email": "test@example.com",
+        "profile_picture": "/static/images/profile-logo.svg",
+        "level": 12,
+        "current_xp": 2450,
+        "xp_to_next_level": 500,
+        "current_streak": 7,
+        "longest_streak": 15,
+        "global_rank": 156,
+        "rank_change": "+3",
+        "user_id": "test-user-123",
+        "subscription_plan": "pro",
+        "learning_goal": "Master Python",
+        "experience_level": "intermediate"
+    }
+    
+    return templates.TemplateResponse(
+        request,
+        "dashboard.html",
+        {
+            "student_data": student_data,
+            "student_id": "test-user"
+        }
+    )
+
+# Add a test profile route without authentication
+@router.get("/profile-test", response_class=HTMLResponse)
+async def profile_test(request: Request):
+    """Test profile page without authentication for testing navbar"""
+    try:
+        # Mock user data for testing
+        mock_user = {
+            "user_id": "test-user-123",
+            "full_name": "Test User",
+            "email": "test@example.com",
+            "avatar_url": "/static/images/profile-logo.svg",
+            "subscription_plan": "pro",
+            "learning_goal": "Master Python",
+            "experience_level": "intermediate"
+        }
+        
+        # Generate mock user stats
+        user_stats = {
+            "courses_completed": 12,
+            "study_hours": 85,
+            "achievements": 8,
+            "streak_days": 7
+        }
+        
+        # Generate mock current goal
+        current_goal = {
+            "title": "Complete Python Fundamentals",
+            "progress": 65,
+            "deadline": "2024-02-15"
+        }
+        
+        context = {
+            "request": request,
+            "user": mock_user,
+            "user_stats": user_stats,
+            "current_goal": current_goal
+        }
+        
+        return templates.TemplateResponse("profile.html", context)
+        
+    except Exception as e:
+        logger.error(f"Error loading test profile page: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error loading profile page")
