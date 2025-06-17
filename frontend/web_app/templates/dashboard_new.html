@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - EduGenie</title>    <link rel="stylesheet" href="{{ url_for('static', path='/css/landing.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', path='/css/dashboard_new.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/auth_nav.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -12,11 +13,10 @@
 <body>
     <!-- Navigation -->
     <nav class="navbar dashboard-nav">
-        <div class="nav-container">
-            <div class="nav-brand">
+        <div class="nav-container">            <a href="/" class="nav-brand">
                 <i class="fas fa-magic"></i>
                 <span>EduGenie</span>
-            </div>            <div class="nav-menu">
+            </a><div class="nav-menu">
                 <a href="/" class="nav-link">
                     <i class="fas fa-home"></i>
                     Home
@@ -34,17 +34,14 @@
                     Your Learning
                 </a>
             </div>
-            <div class="nav-profile">
+            <div class="nav-actions">
+                <!-- Auth state will be dynamically updated by auth_manager.js -->
                 <div class="profile-avatar">
-                    <img src="/static/images/avatar.jpg" alt="Profile" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
-                    <div class="avatar-fallback" style="display: none;">{{ (student_id or 'User')[0]|upper }}</div>
+                    <img src="/static/images/default-avatar.svg" alt="Profile">
                 </div>
                 <div class="profile-info">
-                    <div class="profile-name">{{ student_id or 'Student' }}</div>
+                    <div class="profile-name">{{ student_data.name if student_data else 'Loading...' }}</div>
                     <div class="profile-level">Level 5 • Pro</div>
-                </div>
-                <div class="profile-dropdown">
-                    <i class="fas fa-chevron-down"></i>
                 </div>
             </div>
         </div>
@@ -525,5 +522,6 @@
         </div>
     </main>    <script src="{{ url_for('static', path='/js/landing.js') }}"></script>
     <script src="{{ url_for('static', path='/js/dashboard_new.js') }}"></script>
+    <script src="{{ url_for('static', path='/js/auth_manager.js') }}"></script>
 </body>
 </html>

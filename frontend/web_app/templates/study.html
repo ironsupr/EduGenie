@@ -18,9 +18,8 @@
         <!-- Navigation Header -->
         <header class="study-header">
             <div class="container">
-                <nav class="navbar">
-                    <div class="nav-brand">
-                        <a href="/dashboard?student_id={{ student_id }}">🧞‍♂️ EduGenie</a>
+                <nav class="navbar">                    <div class="nav-brand">
+                        <a href="/">🧞‍♂️ EduGenie</a>
                     </div>
                     <div class="nav-breadcrumb">
                         <a href="/dashboard?student_id={{ student_id }}">Dashboard</a>
@@ -155,7 +154,7 @@
                                     </div>
                                     <div class="practice-input">
                                         <input type="text" placeholder="Enter your answer" class="practice-answer">
-                                        <button class="btn btn-primary btn-sm" onclick="checkAnswer({{ loop.index0 }})">Check</button>
+                                        <button class="btn btn-primary btn-sm" onclick=checkAnswer({{ loop.index0 }})>Check</button>
                                     </div>
                                     <div class="practice-feedback" id="feedback-{{ loop.index0 }}"></div>
                                 </div>

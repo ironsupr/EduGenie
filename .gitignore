@@ -16,18 +16,61 @@ parts/
 sdist/
 var/
 wheels/
+pip-wheel-metadata/
+share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
 
 # Virtual Environment
+.venv/
 venv/
 env/
 ENV/
-.env
-.venv/
-.env.local
-.env.*.local
+.ENV/
+env.bak/
+venv.bak/
+pyvenv.cfg
+
+# Type checkers
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyre/
+.pytype/
+.ruff_cache/
+
+# Linting
+.flake8
+.black
+.isort.cfg
+
+# Cython debug symbols
+cython_debug/
 
 # IDE - VSCode
 .vscode/*
@@ -35,7 +78,40 @@ ENV/
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
+!.vscode/*.code-snippets
 *.code-workspace
+
+# Local History for Visual Studio Code
+.history/
+.ionide/
+
+# JetBrains IDEs
+.idea/
+*.iml
+*.ipr
+*.iws
+out/
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+*.swp
+*.swo
+*~
+Session.vim
+.netrwhist
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
 
 # Coverage reports
 htmlcov/
@@ -56,17 +132,68 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# Google Cloud
+# Google Cloud Service Account Keys - CRITICAL FOR SECURITY
 credentials.json
 *-credentials.json
 *.credentials.json
 gcloud.json
+service-account-*.json
+*-service-account.json
+JSON/
+JSON/*.json
+
+# Firebase/Firestore
+.firebaserc
+firebase-debug.log
+firebase-debug.*.log
+firestore-debug.log
+
+# Environment Variables - CRITICAL FOR SECURITY
+.env
+.env.*
+!.env.example
+!.env.template
+.env.cleaned
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# EduGenie specific debug/test files (you have many of these)
+debug_*.py
+test_*.py
+manual_*.py
+check_*.py
+fix_*.py
+setup_*.py
+examples_google_ai_usage.py
+firestore_example_usage.py
+firestore_integration_complete.py
+firestore_setup_test.py
+quiz_interface_demo.py
+AUTHENTICATION_TODO.py
+
+# Keep important documentation
+!README.md
+!*_README.md
+!*_GUIDE.md
+!*_SETUP.md
+!*_SUMMARY.md
+!*_STRATEGY.md
+!AUTHENTICATION_NAVIGATION_COMPLETE.md
 
 # System Files
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
+Desktop.ini
 *.swp
 *.swo
+*~
 
 # Project specific
 .pytest_cache/
@@ -74,14 +201,73 @@ Thumbs.db
 __pycache__/
 .mypy_cache/
 .pyre/
+.ruff_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
 
-# Database
+# Application logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+uvicorn.log
+gunicorn.log
+
+# Database files
 *.sqlite3
 *.db
+*.sqlite
 
-# Local development
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.temp
+*.bak
+*.backup
+*.orig
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+.Trash-*
+*.swp
+*.swo
+*~
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Jupyter Notebooks
+.ipynb_checkpoints
+*/.ipynb_checkpoints/*
+
+# Documentation builds
+docs/_build/
+site/
+
+# Security - Additional sensitive files
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+secrets.yaml
+secrets.yml
+config/secrets/
+private/
+.secrets/

@@ -44,7 +44,7 @@ FIRESTORE_PROJECT_ID=your_firestore_project_id
 
 # Application Settings
 DEBUG=True
-PROJECT_ID=edugenie
+PROJECT_ID=edugenie-1
 ```
 
 ### 5. Verify Installation

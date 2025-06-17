@@ -7,10 +7,8 @@ from typing import List, Optional
 from datetime import datetime
 
 class Settings(BaseSettings):
-    model_config = ConfigDict(env_file=".env", case_sensitive=True)
-    
-    # Application Info
-    PROJECT_ID: str = "edugenie"
+    model_config = ConfigDict(env_file=".env", case_sensitive=True)    # Application Info
+    PROJECT_ID: str = "edugenie-1"
     VERSION: str = "1.0.0"
     DEBUG: bool = False
       # Paths
@@ -49,13 +47,12 @@ class Settings(BaseSettings):
     GOOGLE_CLIENT_SECRET: Optional[str] = None
     GITHUB_CLIENT_ID: Optional[str] = None
     GITHUB_CLIENT_SECRET: Optional[str] = None
-    SECRET_KEY: Optional[str] = None
-    OAUTH_REDIRECT_URI: str = "http://127.0.0.1:8000/auth/callback"
+    SECRET_KEY: str = "dev-secret-key-for-testing-change-in-production-2024"
+    OAUTH_REDIRECT_URI: str = "http://127.0.0.1:8000/auth/callback"      # Database
+    DATABASE_URL: str = "sqlite:///./edugenie-1.db"
     
-    # Database
-    DATABASE_URL: str = "sqlite:///./edugenie.db"
-    
-    # Google Cloud / Firestore Configuration    GOOGLE_CLOUD_PROJECT_ID: Optional[str] = None
+    # Google Cloud / Firestore Configuration
+    GOOGLE_CLOUD_PROJECT_ID: Optional[str] = None
     FIRESTORE_SERVICE_ACCOUNT_PATH: Optional[str] = None
     FIRESTORE_COLLECTION_PREFIX: str = ""  # For multi-environment support
     
@@ -63,14 +60,9 @@ class Settings(BaseSettings):
     API_KEY: Optional[str] = None
     GOOGLE_CLOUD_PROJECT: Optional[str] = None
     GOOGLE_APPLICATION_CREDENTIALS: Optional[str] = None
-    DATABASE_NAME: str = "edugenie"
+    DATABASE_NAME: str = "edugenie-1"
     ENABLE_ADVANCED_ANALYTICS: bool = True
     ENABLE_REALTIME_FEEDBACK: bool = True
-    
-    # Redis (Caching & Background Tasks)
-    REDIS_URL: str = "redis://localhost:6379/0"
-    CELERY_BROKER_URL: str = "redis://localhost:6379/0"
-    CELERY_RESULT_BACKEND: str = "redis://localhost:6379/0"
     
     # AI Services
     OPENAI_API_KEY: Optional[str] = None
@@ -85,3 +77,7 @@ class Settings(BaseSettings):
 
 # Create settings instance
 settings = Settings()
+
+def get_settings() -> Settings:
+    """Get application settings"""
+    return settings

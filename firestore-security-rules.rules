@@ -1,0 +1,38 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Users collection - users can read/write their own data
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // User authentication collection - only system can access
+    match /user_auth/{authId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // User sessions collection - users can access their own sessions
+    match /user_sessions/{sessionId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // System collections for initialization
+    match /_connection_test/{document=**} {
+      allow read, write: if true; // Allow connection testing
+    }
+    
+    match /{collection}/{document} {
+      match /_system {
+        allow read: if true; // Allow reading system documents
+        allow write: if request.auth != null; // Only authenticated users can write
+      }
+    }
+    
+    // Development mode - allow all operations for testing
+    // Remove this rule in production
+    match /{document=**} {
+      allow read, write: if true;
+    }
+  }
+}

@@ -22,6 +22,7 @@ dialogflow==1.1.0
 authlib==1.3.0
 python-jose[cryptography]==3.3.0
 python-social-auth==0.3.6
+bcrypt==4.1.2
 
 # Development tools
 httpx==0.26.0

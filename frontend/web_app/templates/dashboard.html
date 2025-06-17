@@ -6,9 +6,11 @@
     <title>Dashboard – EduGenie</title>
     <link rel="stylesheet" href="/static/css/main.css">
     <link rel="stylesheet" href="/static/css/dashboard.css">
+    <link rel="stylesheet" href="/static/css/auth_nav.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <meta name="description" content="Your personalized learning dashboard - track progress, view achievements, and continue your learning journey">
 </head>
@@ -17,18 +19,18 @@
         <!-- Navigation Header -->
         <header class="dashboard-header">
             <div class="container">
-                <nav class="navbar">
-                    <div class="nav-brand">
+                <nav class="navbar">                    <a href="/" class="nav-brand">
                         <h1>🧞‍♂️ EduGenie</h1>
-                    </div>                    <div class="nav-menu">
+                    </a><div class="nav-menu">
                         <a href="/" class="nav-link">Home</a>
                         <a href="/courses" class="nav-link">Our Courses</a>
                         <a href="/university-exam" class="nav-link">University Exam</a>
                         <a href="/learning" class="nav-link active">Your Learning</a>
                     </div>
-                    <div class="nav-profile">
+                    <div class="nav-actions">
+                        <!-- Auth state will be dynamically updated by auth_manager.js -->
                         <div class="profile-info">
-                            <span class="profile-name">{{ student_id }}</span>
+                            <span class="profile-name">{{ student_id or "Loading..." }}</span>
                             <span class="profile-level">Level 3</span>
                         </div>
                     </div>
@@ -236,9 +238,8 @@
                 <p>&copy; 2025 EduGenie. Your AI-powered learning companion.</p>
             </div>
         </footer>
-    </div>
-
-    <script src="/static/js/main.js"></script>
+    </div>    <script src="/static/js/main.js"></script>
     <script src="/static/js/dashboard.js"></script>
+    <script src="/static/js/auth_manager.js"></script>
 </body>
 </html>

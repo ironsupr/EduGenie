@@ -339,15 +339,15 @@
             // Log analytics event
             console.log('Quiz completed:', {
                 score: "{{ results.score }}",
-                timeSpent: {{ results.time_taken }},
-                questionsCorrect: {{ results.correct_count }},
-                totalQuestions: {{ results.total_questions }}
+                timeSpent: "{{ results.time_taken }}",
+                questionsCorrect: "{{ results.correct_count }}",
+                totalQuestions: "{{ results.total_questions }}"
             });
         });
         
         // Performance feedback based on score
         const showPerformanceFeedback = () => {
-            const score = {{ results.score }};
+            const score = "{{ results.score }}";
             let message, emoji;
             
             if (score >= 90) {
