@@ -23,22 +23,78 @@ class FirestoreClient:
             service_account_path: Path to service account JSON file
             project_id: Google Cloud project ID
         """
+        self.project_id = project_id
+        self.service_account_path = service_account_path
+        
         try:
             if service_account_path and os.path.exists(service_account_path):
                 # Authenticate using service account key file
+                logger.info(f"Initializing Firestore with service account: {service_account_path}")
                 credentials = service_account.Credentials.from_service_account_file(
                     service_account_path
                 )
                 self.db = firestore.Client(credentials=credentials, project=project_id)
-                logger.info(f"Firestore initialized with service account: {service_account_path}")
+                logger.info(f"Firestore initialized successfully for project: {project_id}")
+                
+                # Test the connection and initialize collections
+                self._test_connection()
+                self._initialize_collections()
+                
             else:
                 # Use default credentials (for GCP environments)
+                logger.info("Initializing Firestore with default credentials")
                 self.db = firestore.Client(project=project_id)
                 logger.info("Firestore initialized with default credentials")
+                
+                # Test the connection and initialize collections
+                self._test_connection()
+                self._initialize_collections()
                 
         except Exception as e:
             logger.error(f"Failed to initialize Firestore client: {str(e)}")
             raise
+    
+    def _test_connection(self):
+        """Test Firestore connection by attempting a simple operation."""
+        try:
+            # Try to read from a test collection
+            test_ref = self.db.collection('_connection_test').limit(1)
+            list(test_ref.stream())  # This will fail if no permissions
+            logger.info("Firestore connection test successful")
+        except Exception as e:
+            logger.error(f"Firestore connection test failed: {str(e)}")
+            raise Exception(f"Firestore connection failed. Check IAM permissions for service account. Error: {str(e)}")
+    
+    def _initialize_collections(self):
+        """Initialize required collections with proper structure."""
+        try:
+            # Collections to initialize
+            collections = ['users', 'user_auth', 'user_sessions']
+            
+            for collection_name in collections:
+                # Check if collection exists by trying to get a document
+                collection_ref = self.db.collection(collection_name)
+                
+                # Create a system document to establish the collection
+                system_doc_ref = collection_ref.document('_system')
+                
+                # Check if system document exists
+                if not system_doc_ref.get().exists:
+                    system_doc_ref.set({
+                        'created_at': datetime.utcnow(),
+                        'collection_name': collection_name,
+                        'purpose': f'System document for {collection_name} collection',
+                        'schema_version': '1.0.0'
+                    })
+                    logger.info(f"Initialized collection: {collection_name}")
+                else:
+                    logger.info(f"Collection already exists: {collection_name}")
+            
+            logger.info("All required collections initialized successfully")
+            
+        except Exception as e:
+            logger.error(f"Failed to initialize collections: {str(e)}")
+            # Don't raise here - collections will be created when first document is added
     
     # CRUD Operations for Students Collection
     
@@ -417,6 +473,207 @@ class FirestoreClient:
             logger.error(f"Error in batch update: {str(e)}")
             return False
 
+    # Generic document operations for authentication
+    
+    async def create_document(self, collection: str, document_id: str, data: Dict[str, Any]) -> bool:
+        """Create a document in the specified collection."""
+        try:
+            data.update({
+                "created_at": datetime.utcnow(),
+                "updated_at": datetime.utcnow()
+            })
+            
+            doc_ref = self.db.collection(collection).document(document_id)
+            doc_ref.set(data)
+            logger.info(f"Created document: {collection}/{document_id}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Error creating document {collection}/{document_id}: {str(e)}")
+            return False
+    
+    async def get_document(self, collection: str, document_id: str) -> Optional[Dict[str, Any]]:
+        """Retrieve a document by ID."""
+        try:
+            doc_ref = self.db.collection(collection).document(document_id)
+            doc = doc_ref.get()
+            
+            if doc.exists:
+                data = doc.to_dict()
+                data["id"] = doc.id
+                logger.info(f"Retrieved document: {collection}/{document_id}")
+                return data
+            else:
+                logger.warning(f"Document not found: {collection}/{document_id}")
+                return None
+                
+        except Exception as e:
+            logger.error(f"Error retrieving document {collection}/{document_id}: {str(e)}")
+            return None
+    
+    async def update_document(self, collection: str, document_id: str, updates: Dict[str, Any]) -> bool:
+        """Update a document."""
+        try:
+            updates["updated_at"] = datetime.utcnow()
+            
+            doc_ref = self.db.collection(collection).document(document_id)
+            doc_ref.update(updates)
+            logger.info(f"Updated document: {collection}/{document_id}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Error updating document {collection}/{document_id}: {str(e)}")
+            return False
+    
+    async def delete_document(self, collection: str, document_id: str) -> bool:
+        """Delete a document from the specified collection."""
+        try:
+            doc_ref = self.db.collection(collection).document(document_id)
+            doc_ref.delete()
+            logger.info(f"Deleted document {document_id} from collection {collection}")
+            return True
+        except Exception as e:
+            logger.error(f"Error deleting document {document_id} from {collection}: {str(e)}")
+            return False
+    
+    async def query_documents(self, collection: str, filters: List[tuple] = None, limit: int = None) -> List[Dict[str, Any]]:
+        """Query documents from a collection with optional filters."""
+        try:
+            query = self.db.collection(collection)
+            
+            # Apply filters
+            if filters:
+                for field, operator, value in filters:
+                    query = query.where(field, operator, value)
+            
+            # Apply limit
+            if limit:
+                query = query.limit(limit)
+            
+            docs = query.stream()
+            results = []
+            for doc in docs:
+                data = doc.to_dict()
+                data['id'] = doc.id
+                results.append(data)
+            
+            logger.info(f"Queried {len(results)} documents from collection {collection}")
+            return results
+            
+        except Exception as e:
+            logger.error(f"Error querying collection {collection}: {str(e)}")
+            return []
+
+    # Synchronous versions for compatibility
+    def create_document_sync(self, collection: str, document_id: str, data: Dict[str, Any]) -> bool:
+        """Create a document in the specified collection (synchronous)."""
+        try:
+            doc_ref = self.db.collection(collection).document(document_id)
+            doc_ref.set(data)
+            logger.info(f"Created document {document_id} in collection {collection}")
+            return True
+        except Exception as e:
+            logger.error(f"Error creating document {document_id} in {collection}: {str(e)}")
+            return False
+    
+    def get_document_sync(self, collection: str, document_id: str) -> Optional[Dict[str, Any]]:
+        """Get a document from the specified collection (synchronous)."""
+        try:
+            doc_ref = self.db.collection(collection).document(document_id)
+            doc = doc_ref.get()
+            if doc.exists:
+                data = doc.to_dict()
+                data['id'] = doc.id
+                return data
+            return None
+        except Exception as e:
+            logger.error(f"Error getting document {document_id} from {collection}: {str(e)}")
+            return None
+    
+    def delete_document_sync(self, collection: str, document_id: str) -> bool:
+        """Delete a document from the specified collection (synchronous)."""
+        try:
+            doc_ref = self.db.collection(collection).document(document_id)
+            doc_ref.delete()
+            logger.info(f"Deleted document {document_id} from collection {collection}")
+            return True
+        except Exception as e:
+            logger.error(f"Error deleting document {document_id} from {collection}: {str(e)}")
+            return False
+
+    def update_document_sync(self, collection: str, document_id: str, data: Dict[str, Any]) -> bool:
+        """Update a document in the specified collection (synchronous)."""
+        try:
+            doc_ref = self.db.collection(collection).document(document_id)
+            doc_ref.update(data)
+            logger.info(f"Updated document {document_id} in collection {collection}")
+            return True
+        except Exception as e:
+            logger.error(f"Error updating document {document_id} in {collection}: {str(e)}")
+            return False
+    
+    def query_documents_sync(self, collection: str, filters: List[tuple] = None, limit: int = None) -> List[Dict[str, Any]]:
+        """Query documents from a collection with optional filters (synchronous)."""
+        try:
+            query = self.db.collection(collection)
+            
+            # Apply filters
+            if filters:
+                for field, operator, value in filters:
+                    query = query.where(field, operator, value)
+            
+            # Apply limit
+            if limit:
+                query = query.limit(limit)
+            
+            docs = query.stream()
+            results = []
+            for doc in docs:
+                data = doc.to_dict()
+                data['id'] = doc.id
+                results.append(data)
+            
+            logger.info(f"Queried {len(results)} documents from collection {collection}")
+            return results
+            
+        except Exception as e:
+            logger.error(f"Error querying collection {collection}: {str(e)}")
+            return []
+
+    # Alias methods for backward compatibility
+    def create_document(self, collection: str, document_id: str, data: Dict[str, Any]) -> bool:
+        """Create a document (backward compatibility)."""
+        return self.create_document_sync(collection, document_id, data)
+    
+    def get_document(self, collection: str, document_id: str) -> Optional[Dict[str, Any]]:
+        """Get a document (backward compatibility)."""
+        return self.get_document_sync(collection, document_id)
+    
+    def delete_document(self, collection: str, document_id: str) -> bool:
+        """Delete a document (backward compatibility)."""
+        return self.delete_document_sync(collection, document_id)
+
+    # Async versions that delegate to sync methods
+    async def create_document_async(self, collection: str, document_id: str, data: Dict[str, Any]) -> bool:
+        """Create a document in the specified collection (async)."""
+        return self.create_document_sync(collection, document_id, data)
+    
+    async def get_document_async(self, collection: str, document_id: str) -> Optional[Dict[str, Any]]:
+        """Get a document from the specified collection (async)."""
+        return self.get_document_sync(collection, document_id)
+    
+    async def update_document_async(self, collection: str, document_id: str, data: Dict[str, Any]) -> bool:
+        """Update a document in the specified collection (async)."""
+        return self.update_document_sync(collection, document_id, data)
+    
+    async def delete_document_async(self, collection: str, document_id: str) -> bool:
+        """Delete a document from the specified collection (async)."""
+        return self.delete_document_sync(collection, document_id)
+    
+    async def query_documents_async(self, collection: str, filters: List[tuple] = None, limit: int = None) -> List[Dict[str, Any]]:
+        """Query documents from a collection with optional filters (async)."""
+        return self.query_documents_sync(collection, filters, limit)
+
 # Global instance
 _firestore_client = None
 
@@ -428,46 +685,3 @@ def get_firestore_client(service_account_path: Optional[str] = None, project_id:
         _firestore_client = FirestoreClient(service_account_path, project_id)
     
     return _firestore_client
-
-# Backward compatibility functions
-def save_assessment(student_id: str, answers: dict, analysis: AssessmentAnalysis):
-    client = get_firestore_client()
-    return client.save_assessment(student_id, answers, analysis)
-
-def save_learning_path(path: LearningPath):
-    client = get_firestore_client()
-    return client.save_learning_path(path)
-
-def log_progress(entry: ProgressEntry):
-    client = get_firestore_client()
-    return client.log_progress(entry)
-
-def fetch_progress(student_id: str) -> list:
-    client = get_firestore_client()
-    return client.fetch_progress(student_id)
-
-def save_lesson_content(topic: str, lesson_data: dict):
-    client = get_firestore_client()
-    return client.save_lesson_content(topic, lesson_data)
-
-def get_all_students():
-    client = get_firestore_client()
-    return client.get_all_students()
-
-def update_weaknesses(student_id: str, weaknesses: list):
-    client = get_firestore_client()
-    return client.update_weaknesses(student_id, weaknesses)
-
-def set_learning_path(student_id: str, plan: list):
-    client = get_firestore_client()
-    return client.set_learning_path(student_id, plan)
-
-# Initialize default client
-db = None
-
-try:
-    default_client = get_firestore_client()
-    db = default_client.db
-except Exception as e:
-    logger.error(f"Failed to initialize default Firestore client: {str(e)}")
-    db = None

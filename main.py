@@ -6,6 +6,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from frontend.web_app.routes import student_routes
 from core.oauth_routes import router as oauth_router
+from core.auth_routes import router as auth_router
 from core.config import settings
 from utils.logger import setup_logger
 from typing import Dict, Any
@@ -43,6 +44,9 @@ app.include_router(student_routes.router)
 
 # Include OAuth router
 app.include_router(oauth_router)
+
+# Include Auth router
+app.include_router(auth_router)
 
 @app.get("/health")
 async def health_check() -> Dict[str, Any]:

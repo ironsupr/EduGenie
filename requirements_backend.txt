@@ -7,11 +7,6 @@ psycopg2-binary==2.9.9
 sqlalchemy==2.0.23
 alembic==1.13.1
 
-# Caching & Background Tasks
-redis==5.0.1
-celery==5.3.4
-flower==2.0.1
-
 # AI/ML
 openai==1.3.6
 langchain==0.0.350

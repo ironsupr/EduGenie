@@ -1,12 +1,16 @@
 # frontend/web_app/routes/student_routes.py
 
-from fastapi import APIRouter, Request, Form, HTTPException
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi import APIRouter, Request, Form, HTTPException, Depends
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from typing import Optional, Dict, Any
 from datetime import datetime
 import json
 from utils.logger import setup_logger
+
+# Import authentication dependencies
+from core.auth_routes import get_current_user, require_auth
+from core.auth_models import UserProfile
 
 logger = setup_logger(__name__)
 
@@ -23,26 +27,28 @@ async def home(request: Request):
     return templates.TemplateResponse(request, "landing.html")
 
 @router.get("/dashboard", response_class=HTMLResponse)
-async def dashboard(request: Request, student_id: str = None):
+async def dashboard(
+    request: Request, 
+    current_user: UserProfile = Depends(require_auth)
+):
     """Modern student dashboard with gamification and AI assistant"""
-    if not student_id:
-        return templates.TemplateResponse(request, "dashboard_new.html", {
-            "error": "Please provide a student ID"
-        })
-    
-    # Enhanced mock data for the new dashboard
-    student_data = students_data.get(student_id, {
-        "name": "Alex Johnson",
-        "email": "alex.johnson@student.edu",
-        "profile_picture": "/static/images/default-avatar.png",
+    # Enhanced dashboard data using current user info
+    student_data = {
+        "name": current_user.full_name,
+        "email": current_user.email,
+        "profile_picture": current_user.avatar_url or "/static/images/default-avatar.png",
         "level": 12,
         "current_xp": 2450,
         "xp_to_next_level": 500,
         "current_streak": 7,
         "longest_streak": 15,
         "global_rank": 156,
-        "rank_change": "+3"
-    })
+        "rank_change": "+3",
+        "user_id": current_user.user_id,
+        "subscription_plan": current_user.subscription_plan,
+        "learning_goal": current_user.learning_goal,
+        "experience_level": current_user.experience_level
+    }
     
     # Comprehensive dashboard data
     dashboard_data = {
@@ -116,15 +122,15 @@ async def dashboard(request: Request, student_id: str = None):
         ],
         
         # Achievements
-        "achievements": [
-            {"name": "Week Warrior", "description": "7-day study streak", "earned": True, "icon": "🔥"},
+        "achievements": [            {"name": "Week Warrior", "description": "7-day study streak", "earned": True, "icon": "🔥"},
             {"name": "Quiz Master", "description": "Score 90+ on 5 quizzes", "earned": True, "icon": "🧠"},
             {"name": "Early Bird", "description": "Complete morning sessions", "earned": False, "icon": "🌅"},
-            {"name": "Perfectionist", "description": "Get 100% on any quiz", "earned": False, "icon": "⭐"}        ]
+            {"name": "Perfectionist", "description": "Get 100% on any quiz", "earned": False, "icon": "⭐"}
+        ]
     }
     
     return templates.TemplateResponse(request, "dashboard_new.html", {
-        "student_id": student_id,
+        "student_id": current_user.user_id,
         "student_data": student_data,
         "dashboard_data": dashboard_data
     })
@@ -261,38 +267,33 @@ async def study_topic(request: Request, topic: str, student_id: str = None):
     return templates.TemplateResponse(request, "study.html", {"topic": content,
         "student_id": student_id})
 
-@router.get("/health")
-async def health_check():
-    """Comprehensive health check endpoint"""
-    from datetime import datetime
-    return {
-        "status": "healthy",
-        "api": "healthy",
-        "timestamp": datetime.utcnow().isoformat() + "Z",
-        "version": "1.0.0",
-        "services": {
-            "student_routes": "healthy",
-            "templates": "healthy",
-            "static_files": "healthy"
-        },
-        "database": "healthy",
-        "service": "student_routes"
-    }
+# Health check moved to main.py to avoid route conflicts
 
 # Landing page routes
 @router.get("/login", response_class=HTMLResponse)
-async def login_page(request: Request):
+async def login_page(request: Request, message: str = None):
     """Login page"""
-    return templates.TemplateResponse(request, "login.html", {
-        "page_title": "Sign In"
-    })
+    context = {"request": request}
+    if message:
+        context["message"] = message
+    return templates.TemplateResponse("login.html", context)
 
 @router.get("/register", response_class=HTMLResponse)
-async def register_page(request: Request, plan: str = "starter"):
-    """Registration page with plan selection"""
-    return templates.TemplateResponse(request, "register.html", {
-        "page_title": "Get Started",
-        "selected_plan": plan
+async def register_page(request: Request):
+    """Registration page"""
+    return templates.TemplateResponse("register.html", {"request": request})
+
+@router.get("/forgot-password", response_class=HTMLResponse)
+async def forgot_password_page(request: Request):
+    """Forgot password page"""
+    return templates.TemplateResponse("forgot_password.html", {"request": request})
+
+@router.get("/reset-password", response_class=HTMLResponse)
+async def reset_password_page(request: Request, token: str):
+    """Reset password page"""
+    return templates.TemplateResponse("reset_password.html", {
+        "request": request,
+        "token": token
     })
 
 @router.get("/demo", response_class=HTMLResponse)

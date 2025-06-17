@@ -57,11 +57,9 @@ An intelligent education management application powered by Google AI SDK for per
 
    # Optional: Firestore Configuration
    GOOGLE_APPLICATION_CREDENTIALS=path/to/service-account-key.json
-   FIRESTORE_PROJECT_ID=your_firestore_project_id
-
-   # Application Settings
+   FIRESTORE_PROJECT_ID=your_firestore_project_id   # Application Settings
    DEBUG=True
-   PROJECT_ID=edugenie
+   PROJECT_ID=edugenie-1
    ```
 
 4. **Run the Application**
