@@ -1,0 +1,115 @@
+<!-- Universal Navigation Component -->
+<nav class="navbar">
+    <div class="nav-container">
+        <a href="/" class="nav-brand">
+            <i class="fas fa-magic"></i>
+            <span>EduGenie</span>
+        </a>
+          <div class="nav-menu">
+            <a href="/" class="nav-link {{ 'active' if request.url.path == '/' else '' }}">Home</a>
+            <a href="/courses" class="nav-link {{ 'active' if request.url.path == '/courses' else '' }}">Courses</a>
+            <a href="/university-exam" class="nav-link {{ 'active' if request.url.path.startswith('/university-exam') else '' }}">University Exam</a>
+            <a href="/study" class="nav-link {{ 'active' if request.url.path == '/study' else '' }}">Study</a>
+        </div>
+        
+        <div class="nav-actions" id="nav-actions">
+            {% if user %}
+                <div class="user-dropdown">
+                    <button class="user-avatar-btn" id="user-menu-btn">
+                        <img src="{{ user.avatar_url or '/static/images/default-avatar.png' }}" 
+                             alt="Profile" class="user-avatar-img">
+                        <span class="user-name">{{ user.full_name or user.email.split('@')[0] }}</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </button>
+                    <div class="dropdown-menu" id="user-dropdown-menu">
+                        <a href="/dashboard" class="dropdown-item">
+                            <i class="fas fa-tachometer-alt"></i>
+                            Dashboard
+                        </a>
+                        <a href="/profile" class="dropdown-item">
+                            <i class="fas fa-user"></i>
+                            Profile
+                        </a>
+                        <a href="/settings" class="dropdown-item">
+                            <i class="fas fa-cog"></i>
+                            Settings
+                        </a>
+                        <div class="dropdown-divider"></div>
+                        <form action="/api/logout" method="post" style="margin: 0;">
+                            <button type="submit" class="dropdown-item logout-btn">
+                                <i class="fas fa-sign-out-alt"></i>
+                                Sign Out
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            {% else %}
+                <a href="/login" class="btn btn-outline">Sign In</a>
+                <a href="/register" class="btn btn-primary">Get Started</a>
+            {% endif %}
+        </div>
+        
+        <div class="mobile-menu-toggle" id="mobile-menu-toggle">
+            <i class="fas fa-bars"></i>
+        </div>
+    </div>
+    
+    <!-- Mobile Menu -->
+    <div class="mobile-menu" id="mobile-menu">
+        {% if user %}
+            <div class="mobile-user-info">
+                <img src="{{ user.avatar_url or '/static/images/default-avatar.png' }}" 
+                     alt="Profile" class="mobile-avatar">
+                <div class="mobile-user-details">
+                    <div class="mobile-user-name">{{ user.full_name or user.email.split('@')[0] }}</div>
+                    <div class="mobile-user-email">{{ user.email }}</div>
+                </div>
+            </div>
+            <div class="mobile-divider"></div>
+        {% endif %}
+          <a href="/" class="mobile-nav-link {{ 'active' if request.url.path == '/' else '' }}">
+            <i class="fas fa-home"></i>
+            Home
+        </a>
+        <a href="/courses" class="mobile-nav-link {{ 'active' if request.url.path == '/courses' else '' }}">
+            <i class="fas fa-book"></i>
+            Courses
+        </a>
+        <a href="/university-exam" class="mobile-nav-link {{ 'active' if request.url.path.startswith('/university-exam') else '' }}">
+            <i class="fas fa-graduation-cap"></i>
+            University Exam
+        </a>
+        <a href="/study" class="mobile-nav-link {{ 'active' if request.url.path == '/study' else '' }}">
+            <i class="fas fa-brain"></i>
+            Study
+        </a>
+        
+        {% if user %}
+            <div class="mobile-divider"></div>
+            <a href="/dashboard" class="mobile-nav-link">
+                <i class="fas fa-tachometer-alt"></i>
+                Dashboard
+            </a>
+            <a href="/profile" class="mobile-nav-link">
+                <i class="fas fa-user"></i>
+                Profile
+            </a>
+            <form action="/api/logout" method="post" class="mobile-logout-form">
+                <button type="submit" class="mobile-nav-link logout-link">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Sign Out
+                </button>
+            </form>
+        {% else %}
+            <div class="mobile-divider"></div>
+            <a href="/login" class="mobile-nav-link">
+                <i class="fas fa-sign-in-alt"></i>
+                Sign In
+            </a>
+            <a href="/register" class="mobile-nav-link">
+                <i class="fas fa-user-plus"></i>
+                Get Started
+            </a>
+        {% endif %}
+    </div>
+</nav>
