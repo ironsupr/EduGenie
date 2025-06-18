@@ -14,9 +14,11 @@ class Settings(BaseSettings):
       # Paths
     TEMPLATES_DIR: str = "frontend/web_app/templates"
     STATIC_DIR: str = "frontend/web_app/static"
-    
-    # Google AI SDK Configuration
+      # Google AI SDK Configuration
     GOOGLE_AI_API_KEY: Optional[str] = None
+    
+    # YouTube API Configuration
+    YOUTUBE_API_KEY: Optional[str] = None
     
     # AI Model Configuration
     AI_MODEL_TEXT: str = "gemini-1.5-flash"

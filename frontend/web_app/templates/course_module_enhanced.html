@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ module.title }} - EduGenie Course Module</title>
+    
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/course_module_enhanced.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Meta tags for SEO and social sharing -->
+    <meta name="description" content="Learn {{ module.title }} with EduGenie's interactive course module featuring AI-generated notes, flashcards, and discussion threads.">
+    <meta property="og:title" content="{{ module.title }} - EduGenie">
+    <meta property="og:description" content="Interactive learning experience with AI-powered study tools">
+    <meta property="og:type" content="educational">
+    
+    <!-- Preload critical resources -->
+    <link rel="preload" href="{{ url_for('static', path='/css/course_module_enhanced.css') }}" as="style">
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" as="style">
+    
+    <!-- Performance and analytics -->
+    <script>
+        // Performance monitoring
+        window.performance.mark('page-start');
+    </script>
+</head>
+
+<body>
+    <!-- Scroll Progress Indicator -->
+    <div class="scroll-progress" id="scrollProgress"></div>
+    
+    <!-- Main Navigation -->
+    <nav class="main-nav" role="navigation" aria-label="Main navigation">
+        <div class="nav-container">
+            <a href="/" class="nav-brand" aria-label="EduGenie Home">
+                <i class="fas fa-magic" aria-hidden="true"></i>
+                <span>EduGenie</span>
+            </a>
+            
+            <div class="nav-menu">
+                <a href="/" class="nav-link">Home</a>
+                <a href="/courses" class="nav-link">Courses</a>
+                <a href="/university-exam" class="nav-link">University Exam</a>
+                <a href="/study" class="nav-link">Study</a>
+            </div>
+            
+            <div class="nav-actions">
+                <button class="nav-btn" onclick="toggleSidebar()" aria-label="Toggle course sidebar" title="Toggle Sidebar (Ctrl+S)">
+                    <i class="fas fa-bars" aria-hidden="true"></i>
+                </button>
+                <button class="nav-btn" aria-label="User profile">
+                    <i class="fas fa-user-circle" aria-hidden="true"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="course-layout">
+        <!-- Enhanced Collapsible Sidebar -->
+        <aside class="sidebar" id="courseSidebar" role="complementary" aria-label="Course navigation">
+            <div class="sidebar-header">
+                <h2>{{ course.title }}</h2>
+                <button class="collapse-btn" onclick="toggleSidebar()" aria-label="Collapse sidebar">
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                </button>
+            </div>
+
+            <!-- Enhanced Progress Section -->
+            <div class="course-progress">
+                <div class="progress-info">
+                    <span class="progress-text">Course Progress</span>
+                    <span class="progress-percent">{{ student_progress.course_progress }}%</span>
+                </div>
+                <div class="progress-bar" role="progressbar" aria-valuenow="{{ student_progress.course_progress }}" aria-valuemin="0" aria-valuemax="100">
+                    <div class="progress-fill" style="width: {{ student_progress.course_progress }}%"></div>
+                </div>
+                
+                <!-- Additional Progress Stats -->
+                <div class="progress-stats">
+                    <div class="stat">
+                        <span class="stat-label">Lessons Completed</span>
+                        <span class="stat-value">{{ student_progress.completed_lessons }}/{{ student_progress.total_lessons }}</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">Time Spent</span>
+                        <span class="stat-value">{{ student_progress.time_spent }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Enhanced Modules List -->
+            <div class="modules-list" role="list">
+                <!-- Module 1: Introduction to Python -->
+                <div class="module-group active" data-module-id="intro-python" role="listitem">
+                    <div class="module-header" onclick="toggleModule(this)" role="button" tabindex="0" aria-expanded="true">
+                        <div class="module-info">
+                            <i class="fas fa-play-circle module-icon" aria-hidden="true"></i>
+                            <span class="module-title">{{ module.title }}</span>
+                        </div>
+                        <div class="module-status">
+                            <i class="fas fa-check-circle completed" aria-label="Module completed" title="Completed"></i>
+                            <i class="fas fa-chevron-down" aria-hidden="true"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="module-content" role="list">
+                        {% for lesson in module.lessons %}
+                        <div class="lesson-item {{ 'active' if lesson.current else '' }} {{ 'completed' if lesson.completed else '' }}" 
+                             onclick="loadLesson(this)" 
+                             data-video-id="{{ lesson.video_id }}"
+                             data-duration="{{ lesson.duration }}"
+                             role="listitem"
+                             tabindex="0">
+                            <i class="fas fa-{{ 'check' if lesson.completed else 'play' }} lesson-icon" aria-hidden="true"></i>
+                            <span class="lesson-title">{{ lesson.title }}</span>
+                            <span class="lesson-duration">{{ lesson.duration }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Additional modules can be added here -->
+                <div class="module-group" data-module-id="variables-types" role="listitem">
+                    <div class="module-header" onclick="toggleModule(this)" role="button" tabindex="0" aria-expanded="false">
+                        <div class="module-info">
+                            <i class="fas fa-play-circle module-icon" aria-hidden="true"></i>
+                            <span class="module-title">Variables & Data Types</span>
+                        </div>
+                        <div class="module-status">
+                            <i class="fas fa-clock in-progress" aria-label="Module in progress" title="In Progress"></i>
+                            <i class="fas fa-chevron-down" aria-hidden="true"></i>
+                        </div>
+                    </div>
+                    <div class="module-content" role="list">
+                        <div class="lesson-item" onclick="loadLesson(this)" data-video-id="vars-1" role="listitem" tabindex="0">
+                            <i class="fas fa-circle lesson-icon" aria-hidden="true"></i>
+                            <span class="lesson-title">Understanding Variables</span>
+                            <span class="lesson-duration">18:15</span>
+                        </div>
+                        <div class="lesson-item" onclick="loadLesson(this)" data-video-id="vars-2" role="listitem" tabindex="0">
+                            <i class="fas fa-circle lesson-icon" aria-hidden="true"></i>
+                            <span class="lesson-title">Strings and Numbers</span>
+                            <span class="lesson-duration">22:40</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="module-group" data-module-id="control-structures" role="listitem">
+                    <div class="module-header" onclick="toggleModule(this)" role="button" tabindex="0" aria-expanded="false">
+                        <div class="module-info">
+                            <i class="fas fa-play-circle module-icon" aria-hidden="true"></i>
+                            <span class="module-title">Control Structures</span>
+                        </div>
+                        <div class="module-status">
+                            <i class="fas fa-lock locked" aria-label="Module locked" title="Locked"></i>
+                            <i class="fas fa-chevron-down" aria-hidden="true"></i>
+                        </div>
+                    </div>
+                    <div class="module-content" role="list">
+                        <div class="lesson-item locked" onclick="showLockedMessage()" role="listitem" tabindex="0">
+                            <i class="fas fa-lock lesson-icon" aria-hidden="true"></i>
+                            <span class="lesson-title">If Statements</span>
+                            <span class="lesson-duration">16:45</span>
+                        </div>
+                        <div class="lesson-item locked" onclick="showLockedMessage()" role="listitem" tabindex="0">
+                            <i class="fas fa-lock lesson-icon" aria-hidden="true"></i>
+                            <span class="lesson-title">Loops</span>
+                            <span class="lesson-duration">20:15</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Enhanced Main Content Area -->
+        <main class="main-content" role="main">
+            <!-- Enhanced Video Section -->
+            <section class="video-section" aria-label="Video lesson">
+                <div class="video-container">
+                    <div class="video-player">
+                        <video id="mainVideo" 
+                               controls 
+                               poster="/static/images/video-poster.jpg"
+                               data-video-id="{{ module.lessons[0].video_id if module.lessons else 'intro-python-1' }}"
+                               aria-label="Course video: {{ module.title }}">
+                            <source src="{{ module.video_url or '/static/videos/intro-python-1.mp4' }}" type="video/mp4">
+                            <track kind="captions" src="/static/captions/{{ module.lessons[0].video_id if module.lessons else 'intro-python-1' }}.vtt" srclang="en" label="English" default>
+                            Your browser does not support the video tag.
+                        </video>
+                        
+                        <div class="video-overlay" id="videoOverlay">
+                            <div class="play-button" onclick="playVideo()" aria-label="Play video">
+                                <i class="fas fa-play" aria-hidden="true"></i>
+                            </div>
+                        </div>
+                        
+                        <!-- Video Progress Bar -->
+                        <div class="video-progress-container">
+                            <div class="video-progress-bar"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="video-info">
+                        <h1 class="video-title">{{ module.lessons[0].title if module.lessons else 'What is Python?' }}</h1>
+                        <div class="video-meta">
+                            <span class="duration"><i class="fas fa-clock" aria-hidden="true"></i> {{ module.duration or '12:30' }}</span>
+                            <span class="views"><i class="fas fa-eye" aria-hidden="true"></i> 1,234 views</span>
+                            
+                            <div class="video-actions">
+                                <button class="action-btn" onclick="toggleBookmark()" aria-label="Bookmark this lesson">
+                                    <i class="fas fa-bookmark" aria-hidden="true"></i>
+                                    Bookmark
+                                </button>
+                                <button class="action-btn" onclick="toggleSpeed()" aria-label="Change playback speed">
+                                    <i class="fas fa-tachometer-alt" aria-hidden="true"></i>
+                                    Speed
+                                </button>
+                                <button class="action-btn mute-btn" onclick="toggleVideoMute()" aria-label="Toggle mute">
+                                    <i class="fas fa-volume-up" aria-hidden="true"></i>
+                                </button>
+                                <button class="action-btn" onclick="toggleFullscreen()" aria-label="Toggle fullscreen">
+                                    <i class="fas fa-expand" aria-hidden="true"></i>
+                                    Fullscreen
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Enhanced Tabbed Content Area -->
+            <section class="content-tabs" role="tabpanel">
+                <div class="tab-navigation" role="tablist" aria-label="Course content tabs">
+                    <button class="tab-btn active" onclick="switchTab('notes')" role="tab" aria-selected="true" aria-controls="notesTab">
+                        <i class="fas fa-file-alt" aria-hidden="true"></i>
+                        <span>AI Notes</span>
+                    </button>
+                    <button class="tab-btn" onclick="switchTab('flashcards')" role="tab" aria-selected="false" aria-controls="flashcardsTab">
+                        <i class="fas fa-cards-blank" aria-hidden="true"></i>
+                        <span>Flashcards</span>
+                    </button>
+                    <button class="tab-btn" onclick="switchTab('discussion')" role="tab" aria-selected="false" aria-controls="discussionTab">
+                        <i class="fas fa-comments" aria-hidden="true"></i>
+                        <span>Discussion</span>
+                        <span class="notification-badge" aria-label="3 new messages">3</span>
+                    </button>
+                    <button class="tab-btn" onclick="switchTab('resources')" role="tab" aria-selected="false" aria-controls="resourcesTab">
+                        <i class="fas fa-download" aria-hidden="true"></i>
+                        <span>Resources</span>
+                    </button>
+                </div>
+
+                <!-- Enhanced AI-Generated Notes Tab -->
+                <div class="tab-content active" id="notesTab" role="tabpanel" aria-labelledby="notes-tab">
+                    <div class="notes-container">
+                        <div class="notes-header">
+                            <h3>🤖 AI-Generated Study Notes</h3>
+                            <div class="notes-actions">
+                                <button class="btn-secondary" onclick="regenerateNotes()" aria-label="Regenerate notes with AI">
+                                    <i class="fas fa-sync-alt" aria-hidden="true"></i> Regenerate
+                                </button>
+                                <button class="btn-primary" onclick="exportNotes()" aria-label="Export notes as PDF">
+                                    <i class="fas fa-download" aria-hidden="true"></i> Export
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="notes-content">
+                            <!-- Key Concepts Section -->
+                            <div class="note-section">
+                                <h4><i class="fas fa-key" aria-hidden="true"></i> Key Concepts</h4>
+                                <ul class="concept-list">
+                                    {% for concept in ai_notes.key_concepts %}
+                                    <li>{{ concept }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+
+                            <!-- Important Points Section -->
+                            <div class="note-section">
+                                <h4><i class="fas fa-star" aria-hidden="true"></i> Important Points</h4>
+                                <div class="highlight-box">
+                                    <strong>{{ ai_notes.important_points.title }}</strong>
+                                    <p>{{ ai_notes.important_points.content }}</p>
+                                </div>
+                            </div>
+
+                            <!-- Code Examples Section -->
+                            {% if ai_notes.code_examples %}
+                            <div class="note-section">
+                                <h4><i class="fas fa-code" aria-hidden="true"></i> Code Examples</h4>
+                                {% for example in ai_notes.code_examples %}
+                                <div class="code-block">
+                                    <h5>{{ example.title }}</h5>
+                                    <pre><code>{{ example.code }}</code></pre>
+                                    <button class="copy-btn" onclick="copyCode(this)" aria-label="Copy code to clipboard">
+                                        <i class="fas fa-copy" aria-hidden="true"></i>
+                                    </button>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+
+                            <!-- Action Items Section -->
+                            <div class="note-section">
+                                <h4><i class="fas fa-tasks" aria-hidden="true"></i> Action Items</h4>
+                                <div class="action-items">
+                                    {% for item in ai_notes.action_items %}
+                                    <div class="action-item">
+                                        <input type="checkbox" id="action{{ loop.index }}" aria-describedby="action{{ loop.index }}-label">
+                                        <label for="action{{ loop.index }}" id="action{{ loop.index }}-label">{{ item }}</label>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Enhanced Flashcards Tab -->
+                <div class="tab-content" id="flashcardsTab" role="tabpanel" aria-labelledby="flashcards-tab">
+                    <div class="flashcards-container">
+                        <div class="flashcards-header">
+                            <h3>🎯 Study Flashcards</h3>
+                            <div class="flashcard-stats">
+                                <span class="stat"><i class="fas fa-cards-blank" aria-hidden="true"></i> {{ flashcards|length }} cards</span>
+                                <span class="stat"><i class="fas fa-check-circle" aria-hidden="true"></i> {{ flashcards|selectattr('mastered')|list|length }} mastered</span>
+                                <span class="stat"><i class="fas fa-clock" aria-hidden="true"></i> {{ (flashcards|length) - (flashcards|selectattr('mastered')|list|length) }} to review</span>
+                            </div>
+                        </div>
+
+                        <div class="flashcard-viewer">
+                            <div class="flashcard" id="currentCard" onclick="flipCard()" tabindex="0" role="button" aria-label="Flashcard - click or press Enter to flip">
+                                <div class="flashcard-front active">
+                                    <div class="card-content">
+                                        <h4>{{ flashcards[0].front if flashcards else 'Loading...' }}</h4>
+                                        <p class="card-hint">Click to reveal answer</p>
+                                    </div>
+                                </div>
+                                <div class="flashcard-back">
+                                    <div class="card-content">
+                                        <p>{{ flashcards[0].back if flashcards else 'Loading...' }}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="flashcard-controls">
+                                <button class="difficulty-btn hard" onclick="markDifficulty('hard')" aria-label="Mark as hard">
+                                    <i class="fas fa-times" aria-hidden="true"></i>
+                                    Hard
+                                </button>
+                                <button class="difficulty-btn medium" onclick="markDifficulty('medium')" aria-label="Mark as medium">
+                                    <i class="fas fa-minus" aria-hidden="true"></i>
+                                    Medium
+                                </button>
+                                <button class="difficulty-btn easy" onclick="markDifficulty('easy')" aria-label="Mark as easy">
+                                    <i class="fas fa-check" aria-hidden="true"></i>
+                                    Easy
+                                </button>
+                            </div>
+
+                            <div class="flashcard-navigation">
+                                <button class="nav-btn" onclick="previousCard()" aria-label="Previous flashcard">
+                                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                                    Previous
+                                </button>
+                                <span class="card-counter" aria-live="polite">1 / {{ flashcards|length if flashcards else 0 }}</span>
+                                <button class="nav-btn" onclick="nextCard()" aria-label="Next flashcard">
+                                    Next
+                                    <i class="fas fa-chevron-right" aria-hidden="true"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="flashcard-options">
+                            <button class="btn-secondary" onclick="shuffleCards()" aria-label="Shuffle flashcards">
+                                <i class="fas fa-random" aria-hidden="true"></i> Shuffle
+                            </button>
+                            <button class="btn-secondary" onclick="resetProgress()" aria-label="Reset progress">
+                                <i class="fas fa-redo" aria-hidden="true"></i> Reset Progress
+                            </button>
+                            <button class="btn-primary" onclick="createFlashcard()" aria-label="Create new flashcard">
+                                <i class="fas fa-plus" aria-hidden="true"></i> Add Card
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Enhanced Discussion Thread Tab -->
+                <div class="tab-content" id="discussionTab" role="tabpanel" aria-labelledby="discussion-tab">
+                    <div class="discussion-container">
+                        <div class="discussion-header">
+                            <h3>💬 Discussion Thread</h3>
+                            <div class="discussion-stats">
+                                <span class="stat"><i class="fas fa-comments" aria-hidden="true"></i> {{ discussion.total_messages }} messages</span>
+                                <span class="stat"><i class="fas fa-users" aria-hidden="true"></i> {{ discussion.participants }} participants</span>
+                            </div>
+                        </div>
+
+                        <div class="discussion-thread" role="log" aria-label="Discussion messages">
+                            {% for message in discussion.messages %}
+                            <div class="message">
+                                <div class="message-avatar">
+                                    <img src="{{ message.avatar }}" alt="{{ message.author }}" loading="lazy">
+                                </div>
+                                <div class="message-content">
+                                    <div class="message-header">
+                                        <span class="message-author">{{ message.author }}</span>
+                                        {% if message.author_role == 'instructor' %}
+                                        <span class="instructor-badge">Instructor</span>
+                                        {% endif %}
+                                        <span class="message-time">{{ message.timestamp }}</span>
+                                    </div>
+                                    <div class="message-text">
+                                        <p>{{ message.content }}</p>
+                                    </div>
+                                    <div class="message-actions">
+                                        <button class="message-action{{ ' liked' if message.likes > 0 else '' }}" onclick="likeMessage(this)" aria-label="Like message">
+                                            <i class="fas fa-heart" aria-hidden="true"></i>
+                                            <span>{{ message.likes }}</span>
+                                        </button>
+                                        <button class="message-action" onclick="replyToMessage(this)" aria-label="Reply to message">
+                                            <i class="fas fa-reply" aria-hidden="true"></i>
+                                            Reply
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                        <div class="discussion-input">
+                            <div class="input-container">
+                                <div class="message-avatar">
+                                    <img src="/static/images/user-avatar.jpg" alt="Your avatar" loading="lazy">
+                                </div>
+                                <textarea 
+                                    id="messageInput" 
+                                    placeholder="Ask a question or share your thoughts..."
+                                    rows="3"
+                                    onkeydown="handleMessageInput(event)"
+                                    aria-label="Type your message"
+                                ></textarea>
+                                <button class="send-btn" onclick="sendMessage()" aria-label="Send message">
+                                    <i class="fas fa-paper-plane" aria-hidden="true"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Enhanced Resources Tab -->
+                <div class="tab-content" id="resourcesTab" role="tabpanel" aria-labelledby="resources-tab">
+                    <div class="resources-container">
+                        <div class="resources-header">
+                            <h3>📚 Course Resources</h3>
+                            <button class="btn-primary" onclick="uploadResource()" aria-label="Upload new resource">
+                                <i class="fas fa-upload" aria-hidden="true"></i> Upload
+                            </button>
+                        </div>
+
+                        <div class="resources-list" role="list">
+                            {% for resource in resources %}
+                            <div class="resource-item" role="listitem">
+                                <div class="resource-icon">
+                                    <i class="{{ resource.icon }}" aria-hidden="true"></i>
+                                </div>
+                                <div class="resource-info">
+                                    <h4>{{ resource.title }}</h4>
+                                    <p>{{ resource.description }}</p>
+                                    <div class="resource-meta">
+                                        {% if resource.size %}
+                                        <span class="resource-size">{{ resource.size }}</span>
+                                        {% endif %}
+                                        <span class="resource-type">{{ resource.type|title }}</span>
+                                    </div>
+                                </div>
+                                <div class="resource-actions">
+                                    {% if resource.type == 'link' %}
+                                    <button class="action-btn" onclick="openLink('{{ resource.url }}')" aria-label="Open {{ resource.title }}">
+                                        <i class="fas fa-external-link-alt" aria-hidden="true"></i>
+                                    </button>
+                                    {% else %}
+                                    <button class="action-btn" onclick="downloadResource('{{ resource.url }}')" aria-label="Download {{ resource.title }}">
+                                        <i class="fas fa-download" aria-hidden="true"></i>
+                                    </button>
+                                    {% endif %}
+                                    <button class="action-btn" onclick="viewResource('{{ resource.url }}')" aria-label="View {{ resource.title }}">
+                                        <i class="fas fa-eye" aria-hidden="true"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Enhanced AI Assistant -->
+    <button class="ai-assistant-fab" onclick="toggleAIAssistant()" aria-label="Open AI Study Assistant" title="AI Assistant (Ctrl+A)">
+        <i class="fas fa-robot" aria-hidden="true"></i>
+    </button>
+
+    <div class="ai-assistant-panel" id="aiAssistantPanel" role="dialog" aria-labelledby="ai-assistant-title" aria-modal="false">
+        <div class="ai-header">
+            <h3 id="ai-assistant-title"><i class="fas fa-robot" aria-hidden="true"></i> AI Study Assistant</h3>
+            <button class="close-btn" onclick="toggleAIAssistant()" aria-label="Close AI assistant">
+                <i class="fas fa-times" aria-hidden="true"></i>
+            </button>
+        </div>
+        
+        <div class="ai-chat" role="log" aria-label="AI conversation">
+            <div class="chat-message ai-message">
+                <div class="message-content">
+                    👋 Hi! I'm your AI study assistant. I can help explain concepts, answer questions about {{ module.title.lower() }}, or suggest study strategies. What would you like to know?
+                </div>
+                <div class="message-time">Just now</div>
+            </div>
+        </div>
+        
+        <div class="ai-input">
+            <input type="text" 
+                   placeholder="Ask me anything about this lesson..." 
+                   id="aiInput" 
+                   onkeydown="handleAIInput(event)"
+                   aria-label="Type your question for AI assistant">
+            <button onclick="sendAIMessage()" aria-label="Send message to AI">
+                <i class="fas fa-paper-plane" aria-hidden="true"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Loading Scripts -->
+    <script src="{{ url_for('static', path='/js/course_module.js') }}"></script>
+    
+    <!-- Additional CSS for enhanced animations -->
+    <style>
+        .scroll-progress {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 0%;
+            height: 3px;
+            background: linear-gradient(90deg, #5f60f5, #764ba2);
+            z-index: 10000;
+            transition: width 0.1s ease;
+        }
+        
+        .typing-dots {
+            display: flex;
+            gap: 4px;
+            padding: 16px;
+        }
+        
+        .typing-dots span {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: currentColor;
+            opacity: 0.5;
+            animation: typing 1.4s infinite;
+        }
+        
+        .typing-dots span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        
+        .typing-dots span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        
+        @keyframes typing {
+            0%, 60%, 100% { opacity: 0.5; }
+            30% { opacity: 1; }
+        }
+        
+        .animate-in {
+            opacity: 1 !important;
+            transform: translateY(0) !important;
+        }
+        
+        .note-section,
+        .resource-item {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.4s ease;
+        }
+        
+        /* High contrast mode improvements */
+        @media (prefers-contrast: high) {
+            .tab-btn.active {
+                background: #000 !important;
+                color: #fff !important;
+                border: 2px solid #fff;
+            }
+            
+            .flashcard-front,
+            .flashcard-back {
+                border: 2px solid #000;
+            }
+        }
+        
+        /* Reduced motion preferences */
+        @media (prefers-reduced-motion: reduce) {
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+                scroll-behavior: auto !important;
+            }
+        }
+    </style>
+
+    <!-- Performance monitoring -->
+    <script>
+        window.addEventListener('load', function() {
+            window.performance.mark('page-loaded');
+            window.performance.measure('page-load-time', 'page-start', 'page-loaded');
+            
+            const perfData = window.performance.getEntriesByName('page-load-time')[0];
+            console.log(`📊 Page loaded in ${Math.round(perfData.duration)}ms`);
+        });
+    </script>
+</body>
+</html>

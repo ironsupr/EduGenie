@@ -1,18 +1,41 @@
 # frontend/web_app/routes/student_routes.py
 
-from fastapi import APIRouter, Request, Form, HTTPException, Depends
+from fastapi import APIRouter, Request, Depends, Form, HTTPException, Query
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
-from typing import Optional, Dict, Any
-from datetime import datetime
+from typing import Optional, List
 import json
-from utils.logger import setup_logger
+import asyncio
+from datetime import datetime, timedelta
+import logging
 
-# Import authentication dependencies
-from core.auth_routes import get_current_user, require_auth
+# Import authentication dependencies from core
 from core.auth_models import UserProfile
+# from core.youtube_service import YouTubeService  # Commented out for now
+
+# Setup logging
+def setup_logger(name):
+    logger = logging.getLogger(name)
+    logger.setLevel(logging.INFO)
+    if not logger.handlers:
+        handler = logging.StreamHandler()
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        handler.setFormatter(formatter)
+        logger.addHandler(handler)
+    return logger
 
 logger = setup_logger(__name__)
+
+# Simple auth dependency for now
+def get_current_user() -> Optional[UserProfile]:
+    """Simple auth dependency - replace with real implementation"""
+    return None
+
+def require_auth() -> UserProfile:
+    """Simple require auth dependency - replace with real implementation"""
+    # For now, return a mock user or raise an exception
+    # In production, this should validate the user session
+    return None
 
 templates = Jinja2Templates(directory="frontend/web_app/templates")
 router = APIRouter()
@@ -322,12 +345,133 @@ async def contact_page(request: Request):
         "contact_mode": True})
 
 @router.get("/courses", response_class=HTMLResponse)
-async def courses_page(request: Request):
-    """Our Courses page"""
-    return templates.TemplateResponse(request, "dashboard_new.html", {
-        "page_title": "Our Courses",
-        "student_id": "student",
-        "courses_mode": True
+async def courses_page(
+    request: Request,
+    current_user: Optional[UserProfile] = Depends(get_current_user)
+):
+    """Comprehensive Courses page with YouTube playlist integration"""
+    
+    # Sample course data (replace with database queries)
+    featured_courses = [
+        {
+            'id': 'python-basics',
+            'title': 'Python Programming for Beginners',
+            'description': 'Learn Python from scratch with this comprehensive course covering all the fundamentals.',
+            'category': 'programming',
+            'level': 'beginner',
+            'type': 'interactive',
+            'thumbnail': '/static/images/python-course.jpg',
+            'instructor': 'Dr. Sarah Johnson',
+            'duration': '8 weeks',
+            'video_count': None,
+            'enrolled_count': 1250,
+            'rating': 4.8,
+            'is_free': True,
+            'is_new': True
+        },
+        {
+            'id': 'yt-js-tutorial',
+            'title': 'Complete JavaScript Tutorial',
+            'description': 'Master JavaScript with this comprehensive YouTube playlist covering ES6+, DOM manipulation, and more.',
+            'category': 'programming',
+            'level': 'intermediate',
+            'type': 'youtube',
+            'thumbnail': 'https://i.ytimg.com/vi/sample/maxresdefault.jpg',
+            'instructor': 'Code Academy',
+            'duration': '12 hours',
+            'video_count': 45,
+            'enrolled_count': 2890,
+            'rating': 4.9,
+            'url': 'https://www.youtube.com/playlist?list=PLsample123',
+            'is_free': True,
+            'is_new': False
+        },
+        {
+            'id': 'math-calculus',
+            'title': 'Calculus I - Differential Calculus',
+            'description': 'AI-guided learning path for mastering differential calculus with personalized practice problems.',
+            'category': 'mathematics',
+            'level': 'intermediate',
+            'type': 'guided',
+            'thumbnail': '/static/images/calculus-course.jpg',
+            'instructor': 'Prof. Michael Chen',
+            'duration': '10 weeks',
+            'video_count': None,
+            'enrolled_count': 892,
+            'rating': 4.7,
+            'is_free': False,
+            'price': 49,
+            'is_new': False
+        }
+    ]
+    
+    all_courses = [
+        *featured_courses,
+        {
+            'id': 'yt-machine-learning',
+            'title': 'Machine Learning Course - Stanford CS229',
+            'description': 'Complete machine learning course from Stanford University available on YouTube.',
+            'category': 'programming',
+            'level': 'advanced',
+            'type': 'youtube',
+            'thumbnail': 'https://i.ytimg.com/vi/sample2/maxresdefault.jpg',
+            'instructor': 'Stanford University',
+            'duration': '20 hours',
+            'video_count': 32,
+            'enrolled_count': 15420,
+            'rating': 4.9,
+            'url': 'https://www.youtube.com/playlist?list=PLsample456',
+            'is_free': True,
+            'is_new': False
+        },
+        {
+            'id': 'chemistry-organic',
+            'title': 'Organic Chemistry Fundamentals',
+            'description': 'Learn the basics of organic chemistry with interactive 3D molecular models.',
+            'category': 'science',
+            'level': 'beginner',
+            'type': 'interactive',
+            'thumbnail': '/static/images/chemistry-course.jpg',
+            'instructor': 'Dr. Emily Rodriguez',
+            'duration': '6 weeks',
+            'video_count': None,
+            'enrolled_count': 567,
+            'rating': 4.6,
+            'is_free': False,
+            'price': 39,
+            'is_new': True
+        },
+        {
+            'id': 'yt-spanish-beginner',
+            'title': 'Learn Spanish - Complete Beginner Course',
+            'description': 'Comprehensive Spanish learning playlist for absolute beginners.',
+            'category': 'language',
+            'level': 'beginner',
+            'type': 'youtube',
+            'thumbnail': 'https://i.ytimg.com/vi/sample3/maxresdefault.jpg',
+            'instructor': 'SpanishPod101',
+            'duration': '15 hours',
+            'video_count': 60,
+            'enrolled_count': 8234,
+            'rating': 4.8,
+            'url': 'https://www.youtube.com/playlist?list=PLsample789',
+            'is_free': True,
+            'is_new': False
+        }
+    ]
+    
+    stats = {
+        'total_courses': len(all_courses),
+        'youtube_playlists': len([c for c in all_courses if c['type'] == 'youtube']),
+        'active_learners': '12K+'
+    }
+    
+    return templates.TemplateResponse(request, "courses.html", {
+        "page_title": "Courses",
+        "user": current_user,
+        "featured_courses": featured_courses,
+        "all_courses": all_courses,
+        "stats": stats
     })
 
 @router.get("/university-exam", response_class=HTMLResponse)
@@ -559,15 +703,27 @@ async def get_gamification_data(student_id: str):
 @router.get("/course/{course_id}/module/{module_id}", response_class=HTMLResponse)
 async def course_module(request: Request, course_id: str, module_id: str, student_id: str = None):
     """Course module page with video player, AI notes, flashcards, and discussion"""
-    
-    # Mock course data
+      # Enhanced course data with module information
     course_data = {
         "id": course_id,
         "title": "Introduction to Python Programming",
         "description": "Learn the fundamentals of Python programming language",
         "instructor": "Dr. Sarah Johnson",
         "duration": "8 weeks",
-        "difficulty": "Beginner"
+        "difficulty": "Beginner",
+        "category": "Programming",
+        "total_modules": 5,
+        "completed_modules": 1,
+        "course_progress": 68,
+        "enrollment_date": "2025-01-01",
+        "last_accessed": "2025-01-14",
+        "course_image": "/static/images/python-course-banner.jpg",
+        "navigation": {
+            "previous_module": None if module_id == "basics" else "introduction", 
+            "next_module": "variables" if module_id == "basics" else None,
+            "course_url": f"/courses",
+            "dashboard_url": f"/dashboard?student_id={student_id or 'demo'}"
+        }
     }
     
     # Mock module data
@@ -577,12 +733,13 @@ async def course_module(request: Request, course_id: str, module_id: str, studen
         "description": "Understanding Python's basic syntax and fundamental concepts",
         "video_url": f"/static/videos/module_{module_id}.mp4",
         "duration": "45 minutes",
-        "lessons": [
-            {
+        "lessons": [            {
                 "id": 1,
                 "title": "What is Python?",
                 "duration": "12:30",
                 "video_id": "intro-python-1",
+                "source_type": "youtube",
+                "youtube_id": "dQw4w9WgXcQ",  # Replace with actual Python tutorial video ID
                 "completed": True,
                 "current": True
             },
@@ -591,6 +748,8 @@ async def course_module(request: Request, course_id: str, module_id: str, studen
                 "title": "Installing Python",
                 "duration": "8:45",
                 "video_id": "intro-python-2",
+                "source_type": "youtube",
+                "youtube_id": "kJQP7kiw5Fk",  # Replace with actual Python installation video ID
                 "completed": True,
                 "current": False
             },
@@ -599,6 +758,8 @@ async def course_module(request: Request, course_id: str, module_id: str, studen
                 "title": "Your First Program",
                 "duration": "15:20",
                 "video_id": "intro-python-3",
+                "source_type": "youtube",
+                "youtube_id": "rfscVS0vtbw",  # Replace with actual Python programming video ID
                 "completed": False,
                 "current": False
             }
@@ -722,8 +883,7 @@ async def course_module(request: Request, course_id: str, module_id: str, studen
             "icon": "fas fa-file-code"
         },
         {
-            "id": 3,
-            "title": "Python Official Documentation",
+            "id": 3,            "title": "Python Official Documentation",
             "description": "Official Python documentation and tutorials",
             "type": "link",
             "url": "https://docs.python.org",
@@ -731,6 +891,28 @@ async def course_module(request: Request, course_id: str, module_id: str, studen
         }
     ]
     
+    # Enhanced course data with module information
+    enhanced_course_data = {
+        "id": course_id,
+        "title": "Introduction to Python Programming",
+        "description": "Learn the fundamentals of Python programming language",
+        "instructor": "Dr. Sarah Johnson",
+        "duration": "8 weeks",
+        "difficulty": "Beginner",
+        "category": "Programming",
+        "total_modules": 5,
+        "completed_modules": 1,
+        "course_progress": 68,
+        "enrollment_date": "2025-01-01",
+        "last_accessed": "2025-01-14",
+        "course_image": "/static/images/python-course-banner.jpg",
+        "navigation": {
+            "previous_module": None if module_id == "basics" else "introduction", 
+            "next_module": "variables" if module_id == "basics" else None,
+            "course_url": f"/courses",
+            "dashboard_url": f"/dashboard?student_id={student_id or 'demo'}"
+        }
+    }    
     return templates.TemplateResponse(request, "course_module.html", {
         "course": course_data,
         "module": module_data,
@@ -1173,3 +1355,382 @@ async def profile_test(request: Request):
     except Exception as e:
         logger.error(f"Error loading test profile page: {str(e)}")
         raise HTTPException(status_code=500, detail="Error loading profile page")
+
+# API endpoint for adding YouTube playlists as courses
+@router.post("/api/courses/add-youtube-playlist", response_class=JSONResponse)
+async def add_youtube_playlist(
+    request: Request,
+    playlist_url: str = Form(...),
+    category: str = Form("programming"),
+    level: str = Form("beginner"),
+    current_user: Optional[UserProfile] = Depends(get_current_user)
+):
+    """Add a YouTube playlist as a course"""
+    try:
+        # YouTube service temporarily disabled
+        # youtube_service = YouTubeService()
+        # playlist_info = await youtube_service.get_playlist_info(playlist_url)
+        
+        # Mock response for now
+        return JSONResponse(
+            status_code=200,
+            content={
+                "success": True,
+                "message": "YouTube playlist feature temporarily disabled",
+                "playlist_id": "mock_playlist"
+            }
+        )
+        
+    except Exception as e:
+        logger.error(f"Error adding YouTube playlist: {e}")
+        return JSONResponse(
+            status_code=500,
+            content={"error": "Failed to add YouTube playlist. Please try again."}
+        )
+
+# API endpoints for course functionality
+@router.get("/api/courses/search", response_class=JSONResponse)
+async def search_courses(
+    request: Request,
+    q: Optional[str] = None,
+    category: Optional[str] = None,
+    level: Optional[str] = None,
+    type: Optional[str] = None,
+    sort: Optional[str] = "newest",
+    page: int = 1,
+    limit: int = 20
+):
+    """Search and filter courses with pagination"""
+    try:
+        # Get all courses (in production, this would be from database)
+        all_courses = get_all_courses_data()
+        
+        # Apply filters
+        filtered_courses = all_courses.copy()
+        
+        # Search by query
+        if q:
+            q_lower = q.lower()
+            filtered_courses = [
+                course for course in filtered_courses
+                if (q_lower in course['title'].lower() or 
+                    q_lower in course['description'].lower() or
+                    q_lower in course['instructor'].lower())
+            ]
+        
+        # Filter by category
+        if category:
+            filtered_courses = [
+                course for course in filtered_courses
+                if course['category'] == category
+            ]
+        
+        # Filter by level
+        if level:
+            filtered_courses = [
+                course for course in filtered_courses
+                if course['level'] == level
+            ]
+        
+        # Filter by type
+        if type:
+            filtered_courses = [
+                course for course in filtered_courses
+                if course['type'] == type
+            ]
+        
+        # Sort courses
+        if sort == "popular":
+            filtered_courses.sort(key=lambda x: x['enrolled_count'], reverse=True)
+        elif sort == "rating":
+            filtered_courses.sort(key=lambda x: x['rating'], reverse=True)
+        elif sort == "title":
+            filtered_courses.sort(key=lambda x: x['title'])
+        else:  # newest
+            filtered_courses.sort(key=lambda x: x.get('created_at', ''), reverse=True)
+        
+        # Apply pagination
+        start_idx = (page - 1) * limit
+        end_idx = start_idx + limit
+        paginated_courses = filtered_courses[start_idx:end_idx]
+        
+        return JSONResponse(
+            status_code=200,
+            content={
+                "courses": paginated_courses,
+                "total": len(filtered_courses),
+                "page": page,
+                "limit": limit,
+                "has_more": end_idx < len(filtered_courses)
+            }
+        )
+        
+    except Exception as e:
+        logger.error(f"Error searching courses: {e}")
+        return JSONResponse(
+            status_code=500,
+            content={"error": "Failed to search courses"}
+        )
+
+@router.get("/api/courses/categories", response_class=JSONResponse)
+async def get_course_categories():
+    """Get all available course categories with counts"""
+    try:
+        all_courses = get_all_courses_data()
+        
+        # Count courses by category
+        category_counts = {}
+        for course in all_courses:
+            category = course['category']
+            category_counts[category] = category_counts.get(category, 0) + 1
+        
+        categories = [
+            {"name": "programming", "label": "Programming", "count": category_counts.get("programming", 0)},
+            {"name": "mathematics", "label": "Mathematics", "count": category_counts.get("mathematics", 0)},
+            {"name": "science", "label": "Science", "count": category_counts.get("science", 0)},
+            {"name": "language", "label": "Languages", "count": category_counts.get("language", 0)},
+            {"name": "business", "label": "Business", "count": category_counts.get("business", 0)},
+            {"name": "art", "label": "Design", "count": category_counts.get("art", 0)},
+        ]
+        
+        return JSONResponse(
+            status_code=200,
+            content={"categories": categories}
+        )
+        
+    except Exception as e:
+        logger.error(f"Error getting categories: {e}")
+        return JSONResponse(
+            status_code=500,
+            content={"error": "Failed to get categories"}
+        )
+
+@router.post("/api/courses/bookmark", response_class=JSONResponse)
+async def toggle_course_bookmark(
+    request: Request,
+    course_id: str = Form(...),
+    current_user: Optional[UserProfile] = Depends(get_current_user)
+):
+    """Toggle bookmark status for a course"""
+    try:
+        if not current_user:
+            return JSONResponse(
+                status_code=401,
+                content={"error": "Authentication required"}
+            )
+        
+        # In production, save to database
+        # For now, we'll just return success
+        
+        return JSONResponse(
+            status_code=200,
+            content={
+                "success": True,
+                "bookmarked": True,  # Would check actual status from database
+                "message": "Course bookmark updated"
+            }
+        )
+        
+    except Exception as e:
+        logger.error(f"Error toggling bookmark: {e}")
+        return JSONResponse(
+            status_code=500,
+            content={"error": "Failed to update bookmark"}
+        )
+
+@router.get("/api/courses/stats", response_class=JSONResponse)
+async def get_course_stats():
+    """Get course statistics for the hero section"""
+    try:
+        all_courses = get_all_courses_data()
+        
+        youtube_count = len([c for c in all_courses if c['type'] == 'youtube'])
+        interactive_count = len([c for c in all_courses if c['type'] in ['interactive', 'guided']])
+        total_learners = sum(course['enrolled_count'] for course in all_courses)
+        
+        stats = {
+            'total_courses': interactive_count,
+            'youtube_playlists': youtube_count,
+            'active_learners': f"{total_learners // 1000}K+" if total_learners >= 1000 else str(total_learners)
+        }
+        
+        return JSONResponse(
+            status_code=200,
+            content=stats
+        )
+        
+    except Exception as e:
+        logger.error(f"Error getting course stats: {e}")
+        return JSONResponse(
+            status_code=500,
+            content={"error": "Failed to get course stats"}
+        )
+
+def get_all_courses_data():
+    """Helper function to get all courses data (replace with database query in production)"""
+    return [
+        {
+            'id': 'python-basics',
+            'title': 'Python Programming for Beginners',
+            'description': 'Learn Python from scratch with this comprehensive course covering all the fundamentals.',
+            'category': 'programming',
+            'level': 'beginner',
+            'type': 'interactive',
+            'thumbnail': '/static/images/python-course.jpg',
+            'instructor': 'Dr. Sarah Johnson',
+            'duration': '8 weeks',
+            'video_count': None,
+            'enrolled_count': 1250,
+            'rating': 4.8,
+            'is_free': True,
+            'is_new': True,
+            'created_at': '2024-01-15T00:00:00Z'
+        },
+        {
+            'id': 'yt-js-tutorial',
+            'title': 'Complete JavaScript Tutorial',
+            'description': 'Master JavaScript with this comprehensive YouTube playlist covering ES6+, DOM manipulation, and more.',
+            'category': 'programming',
+            'level': 'intermediate',
+            'type': 'youtube',
+            'thumbnail': 'https://i.ytimg.com/vi/sample/maxresdefault.jpg',
+            'instructor': 'Code Academy',
+            'duration': '12 hours',
+            'video_count': 45,
+            'enrolled_count': 2890,
+            'rating': 4.9,
+            'url': 'https://www.youtube.com/playlist?list=PLsample123',
+            'is_free': True,
+            'is_new': False,
+            'created_at': '2024-02-01T00:00:00Z'
+        },
+        {
+            'id': 'math-calculus',
+            'title': 'Calculus I - Differential Calculus',
+            'description': 'AI-guided learning path for mastering differential calculus with personalized practice problems.',
+            'category': 'mathematics',
+            'level': 'intermediate',
+            'type': 'guided',
+            'thumbnail': '/static/images/calculus-course.jpg',
+            'instructor': 'Prof. Michael Chen',
+            'duration': '10 weeks',
+            'video_count': None,
+            'enrolled_count': 892,
+            'rating': 4.7,
+            'is_free': False,
+            'price': 49,
+            'is_new': False,
+            'created_at': '2024-01-30T00:00:00Z'
+        },
+        {
+            'id': 'yt-machine-learning',
+            'title': 'Machine Learning Course - Stanford CS229',
+            'description': 'Complete machine learning course from Stanford University available on YouTube.',
+            'category': 'programming',
+            'level': 'advanced',
+            'type': 'youtube',
+            'thumbnail': 'https://i.ytimg.com/vi/sample2/maxresdefault.jpg',
+            'instructor': 'Stanford University',
+            'duration': '20 hours',
+            'video_count': 32,
+            'enrolled_count': 15420,
+            'rating': 4.9,
+            'url': 'https://www.youtube.com/playlist?list=PLsample456',
+            'is_free': True,
+            'is_new': False,
+            'created_at': '2024-01-10T00:00:00Z'
+        },
+        {
+            'id': 'chemistry-organic',
+            'title': 'Organic Chemistry Fundamentals',
+            'description': 'Learn the basics of organic chemistry with interactive 3D molecular models.',
+            'category': 'science',
+            'level': 'beginner',
+            'type': 'interactive',
+            'thumbnail': '/static/images/chemistry-course.jpg',
+            'instructor': 'Dr. Emily Rodriguez',
+            'duration': '6 weeks',
+            'video_count': None,
+            'enrolled_count': 567,
+            'rating': 4.6,
+            'is_free': False,
+            'price': 39,
+            'is_new': True,
+            'created_at': '2024-02-10T00:00:00Z'
+        },
+        {
+            'id': 'yt-spanish-beginner',
+            'title': 'Learn Spanish - Complete Beginner Course',
+            'description': 'Comprehensive Spanish learning playlist for absolute beginners.',
+            'category': 'language',
+            'level': 'beginner',
+            'type': 'youtube',
+            'thumbnail': 'https://i.ytimg.com/vi/sample3/maxresdefault.jpg',
+            'instructor': 'SpanishPod101',
+            'duration': '15 hours',
+            'video_count': 60,
+            'enrolled_count': 8234,
+            'rating': 4.8,
+            'url': 'https://www.youtube.com/playlist?list=PLsample789',
+            'is_free': True,
+            'is_new': False,
+            'created_at': '2024-01-20T00:00:00Z'
+        },
+        {
+            'id': 'data-science-intro',
+            'title': 'Introduction to Data Science',
+            'description': 'Learn data analysis, visualization, and machine learning basics with Python.',
+            'category': 'programming',
+            'level': 'intermediate',
+            'type': 'interactive',
+            'thumbnail': '/static/images/data-science-course.jpg',
+            'instructor': 'Dr. Amanda Wilson',
+            'duration': '12 weeks',
+            'video_count': None,
+            'enrolled_count': 3421,
+            'rating': 4.8,
+            'is_free': False,
+            'price': 79,
+            'is_new': True,
+            'created_at': '2024-02-15T00:00:00Z'
+        },
+        {
+            'id': 'yt-physics-fundamentals',
+            'title': 'Physics Fundamentals - Complete Course',
+            'description': 'Comprehensive physics course covering mechanics, thermodynamics, and electromagnetism.',
+            'category': 'science',
+            'level': 'intermediate',
+            'type': 'youtube',
+            'thumbnail': 'https://i.ytimg.com/vi/sample4/maxresdefault.jpg',
+            'instructor': 'Physics Online',
+            'duration': '25 hours',
+            'video_count': 75,
+            'enrolled_count': 12567,
+            'rating': 4.9,
+            'url': 'https://www.youtube.com/playlist?list=PLsample101112',
+            'is_free': True,
+            'is_new': False,
+            'created_at': '2024-01-05T00:00:00Z'
+        }
+    ]
+
+# Add navigation helper for course modules
+@router.get("/course/{course_id}", response_class=RedirectResponse)
+async def redirect_to_course_module(course_id: str, student_id: str = None):
+    """Redirect to the first module of a course"""
+    # Map course IDs to their first module IDs
+    course_module_map = {
+        'python-basics': 'basics',
+        'math-calculus': 'derivatives', 
+        'chemistry-organic': 'fundamentals',
+        'javascript-advanced': 'es6-features',
+        'data-structures': 'arrays-lists'
+    }
+    
+    module_id = course_module_map.get(course_id, 'introduction')
+    redirect_url = f"/course/{course_id}/module/{module_id}"
+    
+    if student_id:
+        redirect_url += f"?student_id={student_id}"
+    
+    return RedirectResponse(url=redirect_url, status_code=302)

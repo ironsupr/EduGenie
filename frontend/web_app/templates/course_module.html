@@ -3,11 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Course Module - EduGenie</title>
-    <link rel="stylesheet" href="{{ url_for('static', path='/css/course_module.css') }}">
+    <title>Course Module - EduGenie</title>    <link rel="stylesheet" href="{{ url_for('static', path='/css/course_module.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- YouTube API -->
+    <script src="https://www.youtube.com/iframe_api"></script>
 </head>
 <body>
     <!-- Main Navigation -->
@@ -23,6 +24,13 @@
                 <a href="/study" class="nav-link">Study</a>
             </div>
             <div class="nav-actions">
+                <!-- Course Navigation Breadcrumb -->
+                <div class="course-breadcrumb">
+                    <a href="/courses" class="breadcrumb-link">
+                        <i class="fas fa-arrow-left"></i>
+                        Back to Courses
+                    </a>
+                </div>
                 <button class="nav-btn" onclick="toggleSidebar()">
                     <i class="fas fa-bars"></i>
                 </button>
@@ -46,10 +54,24 @@
             <div class="course-progress">
                 <div class="progress-info">
                     <span class="progress-text">Course Progress</span>
-                    <span class="progress-percent">68%</span>
+                    <span class="progress-percent">{{ course.course_progress or 68 }}%</span>
                 </div>
                 <div class="progress-bar">
-                    <div class="progress-fill" style="width: 68%"></div>
+                    <div class="progress-fill" style="width: {{ course.course_progress or 68 }}%"></div>
+                </div>
+                
+                <!-- Course Navigation Controls -->
+                <div class="course-nav-controls">
+                    {% if course.navigation %}
+                        <a href="{{ course.navigation.course_url }}" class="nav-control-btn">
+                            <i class="fas fa-list"></i>
+                            <span>All Courses</span>
+                        </a>
+                        <a href="{{ course.navigation.dashboard_url }}" class="nav-control-btn">
+                            <i class="fas fa-tachometer-alt"></i>
+                            <span>Dashboard</span>
+                        </a>
+                    {% endif %}
                 </div>
             </div>
 
@@ -66,18 +88,26 @@
                             <i class="fas fa-chevron-down"></i>
                         </div>
                     </div>
-                    <div class="module-content">
-                        <div class="lesson-item active" onclick="loadLesson(this)" data-video-id="intro-python-1">
+                    <div class="module-content">                        <div class="lesson-item active" onclick="loadLesson(this)" 
+                             data-video-id="intro-python-1" 
+                             data-source-type="youtube" 
+                             data-youtube-id="dQw4w9WgXcQ">
                             <i class="fas fa-play lesson-icon"></i>
                             <span class="lesson-title">What is Python?</span>
                             <span class="lesson-duration">12:30</span>
                         </div>
-                        <div class="lesson-item completed" onclick="loadLesson(this)" data-video-id="intro-python-2">
+                        <div class="lesson-item completed" onclick="loadLesson(this)" 
+                             data-video-id="intro-python-2" 
+                             data-source-type="youtube" 
+                             data-youtube-id="kJQP7kiw5Fk">
                             <i class="fas fa-check lesson-icon"></i>
                             <span class="lesson-title">Installing Python</span>
                             <span class="lesson-duration">8:45</span>
                         </div>
-                        <div class="lesson-item" onclick="loadLesson(this)" data-video-id="intro-python-3">
+                        <div class="lesson-item" onclick="loadLesson(this)" 
+                             data-video-id="intro-python-3" 
+                             data-source-type="youtube" 
+                             data-youtube-id="rfscVS0vtbw">
                             <i class="fas fa-circle lesson-icon"></i>
                             <span class="lesson-title">Your First Program</span>
                             <span class="lesson-duration">15:20</span>
@@ -145,18 +175,32 @@
         </aside>
 
         <!-- Main Content Area -->
-        <main class="main-content">
-            <!-- Video Section -->
+        <main class="main-content">            <!-- Video Section -->
             <section class="video-section">
                 <div class="video-container">
-                    <div class="video-player">
-                        <video id="mainVideo" controls poster="/static/images/video-poster.jpg">
-                            <source src="/static/videos/intro-python-1.mp4" type="video/mp4">
-                            Your browser does not support the video tag.
-                        </video>
-                        <div class="video-overlay" id="videoOverlay">
-                            <div class="play-button" onclick="playVideo()">
-                                <i class="fas fa-play"></i>
+                    <div class="video-player" id="videoPlayerContainer">
+                        <!-- YouTube Video Player -->
+                        <div id="youtubePlayer" class="youtube-player" style="display: none;">
+                            <iframe 
+                                id="youtubeFrame"
+                                width="100%" 
+                                height="100%" 
+                                frameborder="0" 
+                                allowfullscreen
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture">
+                            </iframe>
+                        </div>
+                        
+                        <!-- Standard Video Player (fallback) -->
+                        <div id="standardPlayer" class="standard-player">
+                            <video id="mainVideo" controls poster="/static/images/video-poster.jpg">
+                                <source src="/static/videos/intro-python-1.mp4" type="video/mp4">
+                                Your browser does not support the video tag.
+                            </video>
+                            <div class="video-overlay" id="videoOverlay">
+                                <div class="play-button" onclick="playVideo()">
+                                    <i class="fas fa-play"></i>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -362,7 +406,7 @@ print(f"My name is {name} and I am {age} years old")</code></pre>
                             <!-- Message 1 -->
                             <div class="message">
                                 <div class="message-avatar">
-                                    <img src="/static/images/avatar-1.jpg" alt="Alex" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMjAiIGZpbGw9IiM1RjYwRjUiLz4KPHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4PSI4IiB5PSI4Ij4KPHBhdGggZD0iTTEyIDEyQzE0LjIwOTEgMTIgMTYgMTAuMjA5MSAxNiA4QzE2IDUuNzkwODYgMTQuMjA5MSA0IDEyIDRDOS43OTA4NiA0IDggNS43OTA4NiA4IDhDOCAxMC4yMDkxIDkuNzkwODYgMTIgMTIgMTJaIiBmaWxsPSJ3aGl0ZSIvPgo8cGF0aCBkPSJNMTIgMTRDOC42ODYyOSAxNCA2IDE2LjY4NjMgNiAyMFYyMkgxOFYyMEMxOCAxNi42ODYzIDE1LjMxMzcgMTQgMTIgMTRaIiBmaWxsPSJ3aGl0ZSIvPgo8L3N2Zz4KPC9zdmc+'">
+                                    <img src="/static/images/avatar-1.jpg" alt="Alex" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMjAiIGZpbGw9IiM1RjYwRjUiLz4KPHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1zbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4PSI4IiB5PSI4Ij4KPHBhdGggZD0iTTEyIDEyQzE0LjIwOTEgMTIgMTYgMTAuMjA5MSAxNiA4QzE2IDUuNzkwODYgMTQuMjA5MSA0IDEyIDRDOS43OTA4NiA0IDggNS43OTA4NiA4IDhDOCAxMC4yMDkxIDkuNzkwODYgMTIgMTIgMTJaIiBmaWxsPSJ3aGl0ZSIvPgo8cGF0aCBkPSJNMTIgMTRDOC42ODYyOSAxNCA2IDE2LjY4NjMgNiAyMFYyMkgxOFYyMEMxOCAxNi42ODYzIDE1LjMxMzcgMTQgMTIgMTRaIiBmaWxsPSJ3aGl0ZSIvPgo8L3N2Zz4KPC9zdmc+'">
                                 </div>
                                 <div class="message-content">
                                     <div class="message-header">
@@ -389,7 +433,7 @@ print(f"My name is {name} and I am {age} years old")</code></pre>
                             <!-- Message 2 -->
                             <div class="message">
                                 <div class="message-avatar">
-                                    <img src="/static/images/avatar-2.jpg" alt="Sarah" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMjAiIGZpbGw9IiNGQ0QzNEQiLz4KPHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4PSI4IiB5PSI4Ij4KPHBhdGggZD0iTTEyIDEyQzE0LjIwOTEgMTIgMTYgMTAuMjA5MSAxNiA4QzE2IDUuNzkwODYgMTQuMjA5MSA0IDEyIDRDOS43OTA4NiA0IDggNS43OTA4NiA4IDhDOCAxMC4yMDkxIDkuNzkwODYgMTIgMTIgMTJaIiBmaWxsPSJ3aGl0ZSIvPgo8cGF0aCBkPSJNMTIgMTRDOC42ODYyOSAxNCA2IDE2LjY4NjMgNiAyMFYyMkgxOFYyMEMxOCAxNi42ODYzIDE1LjMxMzcgMTQgMTIgMTRaIiBmaWxsPSJ3aGl0ZSIvPgo8L3N2Zz4KPC9zdmc+'">
+                                    <img src="/static/images/avatar-2.jpg" alt="Sarah" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1zbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMjAiIGZpbGw9IiNGQ0QzNEQiLz4KPHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1zbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4PSI4IiB5PSI4Ij4KPHBhdGggZD0iTTEyIDEyQzE0LjIwOTEgMTIgMTYgMTAuMjA5MSAxNiA4QzE2IDUuNzkwODYgMTQuMjA5MSA0IDEyIDRDOS43OTA4NiA0IDggNS43OTA4NiA4IDhDOCAxMC4yMDkxIDkuNzkwODYgMTIgMTIgMTJaIiBmaWxsPSJ3aGl0ZSIvPgo8cGF0aCBkPSJNMTIgMTRDOC42ODYyOSAxNCA2IDE2LjY4NjMgNiAyMFYyMkgxOFYyMEMxOCAxNi42ODYzIDE1LjMxMzcgMTQgMTIgMTRaIiBmaWxsPSJ3aGl0ZSIvPgo8L3N2Zz4KPC9zdmc+'">
                                 </div>
                                 <div class="message-content">
                                     <div class="message-header">
@@ -415,7 +459,7 @@ print(f"My name is {name} and I am {age} years old")</code></pre>
                             <!-- Message 3 -->
                             <div class="message">
                                 <div class="message-avatar">
-                                    <img src="/static/images/avatar-3.jpg" alt="Mike" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMjAiIGZpbGw9IiMxMEI5ODEiLz4KPHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4PSI4IiB5PSI4Ij4KPHBhdGggZD0iTTEyIDEyQzE0LjIwOTEgMTIgMTYgMTAuMjA5MSAxNiA4QzE2IDUuNzkwODYgMTQuMjA5MSA0IDEyIDRDOS43OTA4NiA0IDggNS43OTA4NiA4IDhDOCAxMC4yMDkxIDkuNzkwODYgMTIgMTIgMTJaIiBmaWxsPSJ3aGl0ZSIvPgo8cGF0aCBkPSJNMTIgMTRDOC42ODYyOSAxNCA2IDE2LjY4NjMgNiAyMFYyMkgxOFYyMEMxOCAxNi42ODYzIDE1LjMxMzcgMTQgMTIgMTRaIiBmaWxsPSJ3aGl0ZSIvPgo8L3N2Zz4KPC9zdmc+'">
+                                    <img src="/static/images/avatar-3.jpg" alt="Mike" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1zbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMjAiIGZpbGw9IiMxMEI5ODEiLz4KPHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1zbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4PSI4IiB5PSI4Ij4KPHBhdGggZD0iTTEyIDEyQzE0LjIwOTEgMTIgMTYgMTAuMjA5MSAxNiA4QzE2IDUuNzkwODYgMTQuMjA5MSA0IDEyIDRDOS43OTA4NiA0IDggNS43OTA4NiA4IDhDOCAxMC4yMDkxIDkuNzkwODYgMTIgMTIgMTJaIiBmaWxsPSJ3aGl0ZSIvPgo8cGF0aCBkPSJNMTIgMTRDOC42ODYyOSAxNCA2IDE2LjY4NjMgNiAyMFYyMkgxOFYyMEMxOCAxNi42ODYzIDE1LjMxMzcgMTQgMTIgMTRaIiBmaWxsPSJ3aGl0ZSIvPgo8L3N2Zz4KPC9zdmc+'">
                                 </div>
                                 <div class="message-content">
                                     <div class="message-header">
@@ -442,7 +486,7 @@ print(f"My name is {name} and I am {age} years old")</code></pre>
                         <div class="discussion-input">
                             <div class="input-container">
                                 <div class="message-avatar">
-                                    <img src="/static/images/your-avatar.jpg" alt="You" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMjAiIGZpbGw9IiM2NzY2NzkiLz4KPHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4PSI4IiB5PSI4Ij4KPHBhdGggZD0iTTEyIDEyQzE0LjIwOTEgMTIgMTYgMTAuMjA5MSAxNiA4QzE2IDUuNzkwODYgMTQuMjA5MSA0IDEyIDRDOS43OTA4NiA0IDggNS43OTA4NiA4IDhDOCAxMC4yMDkxIDkuNzkwODYgMTIgMTIgMTJaIiBmaWxsPSJ3aGl0ZSIvPgo8cGF0aCBkPSJNMTIgMTRDOC42ODYyOSAxNCA2IDE2LjY4NjMgNiAyMFYyMkgxOFYyMEMxOCAxNi42ODYzIDE1LjMxMzcgMTQgMTIgMTRaIiBmaWxsPSJ3aGl0ZSIvPgo8L3N2Zz4KPC9zdmc+'">
+                                    <img src="/static/images/your-avatar.jpg" alt="You" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1zbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMjAiIGZpbGw9IiM2NzY2NzkiLz4KPHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1zbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4PSI4IiB5PSI4Ij4KPHBhdGggZD0iTTEyIDEyQzE0LjIwOTEgMTIgMTYgMTAuMjA5MSAxNiA4QzE2IDUuNzkwODYgMTQuMjA5MSA0IDEyIDRDOS43OTA4NiA0IDggNS43OTA4NiA4IDhDOCAxMC4yMDkxIDkuNzkwODYgMTIgMTIgMTJaIiBmaWxsPSJ3aGl0ZSIvPgo8cGF0aCBkPSJNMTIgMTRDOC42ODYyOSAxNCA2IDE2LjY4NjMgNiAyMFYyMkgxOFYyMEMxOCAxNi42ODYzIDE1LjMxMzcgMTQgMTIgMTRaIiBmaWxsPSJ3aGl0ZSIvPgo8L3N2Zz4KPC9zdmc+'">
                                 </div>
                                 <textarea 
                                     id="messageInput" 
@@ -527,6 +571,42 @@ print(f"My name is {name} and I am {age} years old")</code></pre>
                 </div>
             </section>
         </main>
+        
+        <!-- Module Navigation Footer -->
+        <div class="module-navigation-footer">
+            <div class="module-nav-container">
+                {% if course.navigation %}
+                    {% if course.navigation.previous_module %}
+                        <a href="/course/{{ course.id }}/module/{{ course.navigation.previous_module }}?student_id={{ student_id }}" 
+                           class="module-nav-btn prev">
+                            <i class="fas fa-chevron-left"></i>
+                            <div class="nav-btn-content">
+                                <span class="nav-btn-label">Previous Module</span>
+                                <span class="nav-btn-title">{{ course.navigation.previous_module | title }}</span>
+                            </div>
+                        </a>
+                    {% endif %}
+                    
+                    <div class="module-nav-center">
+                        <button class="module-nav-btn center" onclick="toggleSidebar()">
+                            <i class="fas fa-list"></i>
+                            <span>All Modules</span>
+                        </button>
+                    </div>
+                    
+                    {% if course.navigation.next_module %}
+                        <a href="/course/{{ course.id }}/module/{{ course.navigation.next_module }}?student_id={{ student_id }}" 
+                           class="module-nav-btn next">
+                            <div class="nav-btn-content">
+                                <span class="nav-btn-label">Next Module</span>
+                                <span class="nav-btn-title">{{ course.navigation.next_module | title }}</span>
+                            </div>
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                    {% endif %}
+                {% endif %}
+            </div>
+        </div>
     </div>
 
     <!-- AI Assistant Floating Button -->
