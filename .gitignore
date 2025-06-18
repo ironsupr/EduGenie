@@ -1,8 +1,76 @@
-# Python
+# EduGenie .gitignore - Comprehensive Security & Development Configuration
+
+# ======================
+# CRITICAL SECURITY FILES
+# ======================
+
+# Environment Variables - CRITICAL FOR SECURITY
+.env
+.env.*
+!.env.example
+!.env.template
+.env.cleaned
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Google Cloud Service Account Keys - CRITICAL FOR SECURITY
+credentials.json
+*-credentials.json
+*.credentials.json
+gcloud.json
+service-account-*.json
+*-service-account.json
+JSON/
+JSON/*.json
+*.json.key
+edugenie-*.json
+*-edugenie.json
+
+# Firebase/Firestore Configuration
+.firebaserc
+firebase-debug.log
+firebase-debug.*.log
+firestore-debug.log
+firestore.indexes.json
+firestore.rules.backup
+
+# API Keys and Secrets
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+api_keys.json
+secrets.yaml
+secrets.yml
+config/secrets/
+private/
+.secrets/
+oauth_credentials.json
+
+# ======================
+# PYTHON ENVIRONMENT
+# ======================
+
+# Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
+
+# Virtual Environment
+.venv/
+venv/
+env/
+ENV/
+.ENV/
+env.bak/
+venv.bak/
+pyvenv.cfg
+
+# Distribution / packaging
 .Python
 build/
 develop-eggs/
@@ -46,16 +114,6 @@ coverage.xml
 .pytest_cache/
 cover/
 
-# Virtual Environment
-.venv/
-venv/
-env/
-ENV/
-.ENV/
-env.bak/
-venv.bak/
-pyvenv.cfg
-
 # Type checkers
 .mypy_cache/
 .dmypy.json
@@ -64,15 +122,84 @@ dmypy.json
 .pytype/
 .ruff_cache/
 
-# Linting
-.flake8
-.black
-.isort.cfg
+# ======================
+# EDUGENIE SPECIFIC FILES
+# ======================
 
-# Cython debug symbols
-cython_debug/
+# Debug and Test Files
+debug_*.py
+test_*.py
+manual_*.py
+check_*.py
+fix_*.py
+setup_*.py
+quick_*.py
+run_*.py
+verify_*.py
+simple_*.py
+examples_*.py
+firestore_example_usage.py
+firestore_integration_complete.py
+firestore_setup_test.py
+quiz_interface_demo.py
+AUTHENTICATION_TODO.py
+final_verification.py
+fixes_summary.py
+login_navbar_verification.py
+integrate_enhanced_module.py
 
-# IDE - VSCode
+# Test Output Files
+*test_output*
+*.output
+login_test_output.txt
+*_test.txt
+*_debug.txt
+*_error.txt
+
+# Demo/Example Files
+navbar_demo.html
+*.demo.html
+*.example.html
+
+# Temporary Summary Files (keep important documentation)
+ENV_CLEANUP_SUMMARY.md
+ERROR_RESOLUTION_SUMMARY.md
+PROJECT_UPDATE_SUMMARY.md
+LOGIN_FIXES_SUMMARY.md
+*_FIXES_SUMMARY.md
+*_UPDATE_SUMMARY.md
+*_CLEANUP_SUMMARY.md
+*_RESOLUTION_SUMMARY.md
+
+# Backup Files
+*.backup
+*.bak
+*.orig
+.gitignore.backup
+
+# Development Data
+data/temp/
+data/cache/
+data/test/
+data/*.sqlite3
+data/*.db
+
+# Duplicate CSS/JS Files
+*_new.css
+*_old.css
+*_backup.css
+*_temp.css
+*_new.js
+*_old.js
+*_backup.js
+*_temp.js
+*_clean.js
+
+# ======================
+# IDE AND EDITOR FILES
+# ======================
+
+# VSCode
 .vscode/*
 !.vscode/settings.json
 !.vscode/tasks.json
@@ -80,8 +207,6 @@ cython_debug/
 !.vscode/extensions.json
 !.vscode/*.code-snippets
 *.code-workspace
-
-# Local History for Visual Studio Code
 .history/
 .ionide/
 
@@ -113,90 +238,87 @@ auto-save-list
 tramp
 .\#*
 
-# Coverage reports
-htmlcov/
-.tox/
-.coverage
-.coverage.*
-.cache
-nosetests.xml
-coverage.xml
-*.cover
-.hypothesis/
-.pytest_cache/
+# ======================
+# SYSTEM FILES
+# ======================
 
-# Logs
+# macOS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+
+# Windows
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+$RECYCLE_BIN/
+
+# Linux
+*~
+.directory
+.Trash-*
+
+# ======================
+# LOGS AND TEMPORARY FILES
+# ======================
+
+# Application Logs
 logs/
 *.log
+*.log.*
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+lerna-debug.log*
+uvicorn.log
+gunicorn.log
+error.log
+access.log
+application.log
 
-# Google Cloud Service Account Keys - CRITICAL FOR SECURITY
-credentials.json
-*-credentials.json
-*.credentials.json
-gcloud.json
-service-account-*.json
-*-service-account.json
-JSON/
-JSON/*.json
+# Database Files
+*.sqlite3
+*.db
+*.sqlite
 
-# Firebase/Firestore
-.firebaserc
-firebase-debug.log
-firebase-debug.*.log
-firestore-debug.log
+# Temporary Files
+tmp/
+temp/
+.tmp/
+.cache/
+cache/
+*.tmp
+*.temp
 
-# Environment Variables - CRITICAL FOR SECURITY
-.env
-.env.*
-!.env.example
-!.env.template
-.env.cleaned
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+# Runtime Data
+pids/
+*.pid
+*.seed
+*.pid.lock
 
-# EduGenie specific debug/test files (you have many of these)
-debug_*.py
-test_*.py
-manual_*.py
-check_*.py
-fix_*.py
-setup_*.py
-examples_google_ai_usage.py
-firestore_example_usage.py
-firestore_integration_complete.py
-firestore_setup_test.py
-quiz_interface_demo.py
-AUTHENTICATION_TODO.py
-final_verification.py
-fixes_summary.py
-login_navbar_verification.py
-run_and_test.py
-simple_profile_test.py
+# ======================
+# FRONTEND/STATIC FILES
+# ======================
 
-# Test output files
-*test_output*
-*.output
-login_test_output.txt
+# Node.js (if used for frontend tooling)
+node_modules/
+npm-debug.log
+yarn-error.log
+package-lock.json
+yarn.lock
 
-# Demo/example HTML files
-navbar_demo.html
+# Compiled assets
+*.min.css
+*.min.js
+*.map
 
-# Backup files
-*.backup
-.gitignore.backup
+# ======================
+# DOCUMENTATION & MEDIA
+# ======================
 
-# Summary and documentation files (keep important ones, ignore temporary ones)
-ENV_CLEANUP_SUMMARY.md
-ERROR_RESOLUTION_SUMMARY.md
-PROJECT_UPDATE_SUMMARY.md
-LOGIN_FIXES_SUMMARY.md
-
-# Keep important documentation
+# Keep Important Documentation
 !README.md
 !*_README.md
 !*_GUIDE.md
@@ -213,136 +335,18 @@ LOGIN_FIXES_SUMMARY.md
 !GOOGLE_AI_SETUP.md
 !OAUTH_SETUP.md
 !USER_DATA_STORAGE_GUIDE.md
+!COURSE_MODULE_INTEGRATION_GUIDE.md
+!ENHANCED_COURSE_MODULE_GUIDE.md
+!VIDEO_CONTENT_OPTIONS_GUIDE.md
+!YOUTUBE_INTEGRATION_GUIDE.md
+!COURSES_PAGE_IMPLEMENTATION.md
+!COURSES_REDESIGN_COMPLETE.md
 
-# System Files
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
-Desktop.ini
-*.swp
-*.swo
-*~
-
-# Project specific
-.pytest_cache/
-*.pyc
-__pycache__/
-.mypy_cache/
-.pyre/
-.ruff_cache/
-.coverage
-htmlcov/
-.tox/
-.nox/
-
-# Application logs
-logs/
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-lerna-debug.log*
-uvicorn.log
-gunicorn.log
-
-# Database files
-*.sqlite3
-*.db
-*.sqlite
-
-# Temporary files
-tmp/
-temp/
-*.tmp
-*.temp
-*.bak
-*.backup
-*.orig
-
-# OS generated files
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
-Desktop.ini
-$RECYCLE.BIN/
-.Trash-*
-*.swp
-*.swo
-*~
-
-# Runtime data
-pids/
-*.pid
-*.seed
-*.pid.lock
-
-# Jupyter Notebooks
-.ipynb_checkpoints
-*/.ipynb_checkpoints/*
-
-# Documentation builds
+# Documentation Builds
 docs/_build/
 site/
 
-# Security - Additional sensitive files
-*.pem
-*.key
-*.crt
-*.p12
-*.pfx
-secrets.yaml
-secrets.yml
-config/secrets/
-private/
-.secrets/
-
-# Additional unimportant file patterns
-# Temporary/cache directories
-.cache/
-.tmp/
-temp/
-cache/
-
-# Editor/IDE temporary files
-.vscode/settings.json.bak
-*.orig
-*.rej
-*.patch
-
-# System and application caches
-.pytest_cache/
-.coverage
-.nyc_output/
-.sass-cache/
-
-# Build artifacts
-build/
-dist/
-*.egg-info/
-
-# Package lock files (optional - remove if you want to track them)
-# package-lock.json
-# yarn.lock
-
-# Local development files
-local_settings.py
-local_config.py
-dev_settings.py
-
-# Error and access logs
-error.log
-access.log
-application.log
-
-# Large files that shouldn't be in git
+# Large Media Files
 *.zip
 *.tar.gz
 *.rar
@@ -353,40 +357,20 @@ application.log
 *.mkv
 *.mp3
 *.wav
+*.flv
+*.wmv
 
-# Development and testing files that should not be tracked
-quick_*.py
-run_*.py
-check_*.py
-verify_*.py
+# ======================
+# JUPYTER NOTEBOOKS
+# ======================
 
-# Documentation that might be temporary
-*_FIXES_SUMMARY.md
-*_UPDATE_SUMMARY.md
-*_CLEANUP_SUMMARY.md
-*_RESOLUTION_SUMMARY.md
+.ipynb_checkpoints
+*/.ipynb_checkpoints/*
 
-# Project-specific temporary files
-.env.cleaned
-navbar_demo.html
-*.demo.html
+# ======================
+# COMPILED FILES
+# ======================
 
-# IDE and development artifacts
-.vscode/launch.json.bak
-.vscode/tasks.json.bak
-
-# Additional log patterns
-*.log.*
-log_*.txt
-debug_*.txt
-error_*.txt
-
-# Node modules if any frontend dependencies are added later
-node_modules/
-npm-debug.log
-yarn-error.log
-
-# Compiled files
 *.com
 *.class
 *.dll
