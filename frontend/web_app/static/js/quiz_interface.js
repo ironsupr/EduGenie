@@ -221,6 +221,33 @@ class QuizInterface {
         document.getElementById('totalQuestions').textContent = totalQuestions;
     }
 
+    // Centralized API response handler for consistent error handling    async handleApiResponse(response, successMessage) {
+        if (response.ok) {
+            if (successMessage) {
+                // Show success message if provided
+                errorHandler.showNotification(successMessage, 'success');
+            }
+            return await response.json().catch(() => ({}));
+        } else if (response.status === 401) {
+            // Handle authentication errors
+            errorHandler.showNotification('Your session has expired. Please log in again.', 'error');
+            
+            // Save quiz progress before redirecting
+            await this.autoSaveProgress();
+            
+            // Redirect to login after a short delay
+            setTimeout(() => {
+                window.location.href = '/login?redirect_url=/quiz';
+            }, 2000);
+            
+            throw new Error('Unauthorized');
+        } else {
+            // Handle other API errors
+            const error = await response.json().catch(() => ({ detail: 'An unknown error occurred.' }));
+            throw new Error(error.detail || 'An unknown error occurred.');
+        }
+    }
+
     goToQuestion(index) {
         if (index >= 0 && index < window.quizData.questions.length) {
             this.currentQuestion = index;
@@ -319,8 +346,8 @@ class QuizInterface {
                 })
             });
 
-            if (response.ok) {
-                const data = await response.json();
+            const data = await this.handleApiResponse(response);
+            if (data.hint) {
                 hintsContent.innerHTML = `
                     <div class="hint-content">
                         <h5>💡 Hint</h5>
@@ -460,12 +487,8 @@ class QuizInterface {
                 })
             });
 
-            if (response.ok) {
-                const result = await response.json();
-                window.location.href = `/quiz/results/${result.submission_id}`;
-            } else {
-                throw new Error('Failed to submit quiz');
-            }
+            const result = await this.handleApiResponse(response);
+            window.location.href = `/quiz/results/${result.submission_id}`;
         } catch (error) {
             alert('There was an error submitting your quiz. Please try again.');
             console.error('Quiz submission error:', error);
@@ -482,7 +505,7 @@ class QuizInterface {
     async autoSaveProgress() {
         if (window.quizData.autoSave && Date.now() - this.lastSaveTime > 5000) {
             try {
-                await fetch('/api/quiz/save-progress', {
+                const response = await fetch('/api/quiz/save-progress', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -496,6 +519,7 @@ class QuizInterface {
                         time_remaining: this.timeRemaining
                     })
                 });
+                await this.handleApiResponse(response);
                 this.lastSaveTime = Date.now();
             } catch (error) {
                 console.warn('Auto-save failed:', error);
@@ -520,6 +544,8 @@ class QuizInterface {
                     this.updateNavigationState();
                     this.updateProgressInfo();
                 }
+            } else {
+                await this.handleApiResponse(response);
             }
         } catch (error) {
             console.warn('Failed to load saved progress:', error);

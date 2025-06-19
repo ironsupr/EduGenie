@@ -1,4 +1,6 @@
 /* Login Page Specific Styles */
+/* Import the theme variables */
+@import 'theme.css';
 .login-section {
     min-height: 100vh;
     padding: 120px 0 var(--space-3xl);

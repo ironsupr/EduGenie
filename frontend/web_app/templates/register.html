@@ -1,37 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
+<head>    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ page_title or "Get Started" }} - EduGenie</title>
-    <link rel="stylesheet" href="{{ url_for('static', path='/css/landing.css') }}">
+    <!-- Unified Theme System -->
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/theme.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/base.css') }}">
+    <!-- Page Specific Styles -->
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/navbar.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', path='/css/register.css') }}">    
     <link rel="stylesheet" href="{{ url_for('static', path='/css/auth_nav.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/notifications.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <!-- Navigation -->
-    <nav class="navbar">
-        <div class="nav-container">            <a href="/" class="nav-brand">
-                <i class="fas fa-magic"></i>
-                <span>EduGenie</span>
-            </a>            <div class="nav-menu">
-                <a href="/" class="nav-link">Home</a>
-                <a href="/courses" class="nav-link">Courses</a>
-                <a href="/university-exam" class="nav-link">University Exam</a>
-                <a href="/study" class="nav-link">Study</a>
-            </div>
-            <div class="nav-actions">
-                <!-- Auth state will be dynamically updated by auth_manager.js -->
-                <a href="/login" class="btn btn-outline">Sign In</a>
-                <a href="/register" class="btn btn-primary">Get Started</a>
-            </div>
-            <div class="mobile-menu-toggle">
-                <i class="fas fa-bars"></i>
-            </div>
-        </div>
-    </nav>
+    <!-- Universal Navigation -->
+    {% include 'components/navbar.html' %}
 
     <!-- Register Section -->
     <section class="register-section">
@@ -280,8 +265,9 @@
                     <p>&copy; 2025 EduGenie. All rights reserved.</p>
                 </div>
             </div>
-        </div>
-    </footer>    <script src="{{ url_for('static', path='/js/landing.js') }}"></script>
+        </div>    </footer>    <script src="{{ url_for('static', path='/js/error_handler.js') }}"></script>
+    <script src="{{ url_for('static', path='/js/navbar.js') }}"></script>
+    <script src="{{ url_for('static', path='/js/landing.js') }}"></script>
     <script src="{{ url_for('static', path='/js/register.js') }}"></script>
     <script src="{{ url_for('static', path='/js/auth_manager.js') }}"></script>
 </body>

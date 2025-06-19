@@ -8,7 +8,7 @@ class DashboardManager {
 
     init() {
         this.initializeProgressChart();
-        this.loadStudentProgress();
+        this.loadDashboardData();
         this.setupEventListeners();
         this.startProgressPolling();
     }
@@ -76,23 +76,50 @@ class DashboardManager {
                 }
             }
         });
+    }    async handleApiResponse(response, successMessage) {
+        // Use the centralized error handler
+        return await errorHandler.handleApiResponse(
+            response, 
+            successMessage, 
+            '/login?redirect_url=/app/dashboard'
+        );
+    }
+
+    async loadDashboardData() {
+        try {
+            const response = await fetch(`/api/dashboard/data`);
+            const data = await this.handleApiResponse(response);
+            if (data) {
+                this.updateProgressDisplay(data.progress);
+                this.updateActivityFeed(data.recent_activity);
+                this.updateStreak(data.streak);
+            }
+        } catch (error) {
+            if (error.message !== 'Unauthorized') {
+                console.error('Could not load dashboard data:', error);
+                this.showNotification('Failed to load dashboard data.', 'error');
+            }
+        }
     }
 
     async loadStudentProgress() {
-        if (!this.studentId) return;
+        if (!this.studentId) return; // This method might be deprecated or refactored
 
         try {
             const response = await fetch(`/api/student/${this.studentId}/progress`);
-            if (response.ok) {
-                const progressData = await response.json();
+            const progressData = await this.handleApiResponse(response);
+            if (progressData) {
                 this.updateProgressDisplay(progressData);
             }
         } catch (error) {
-            console.warn('Could not load progress data:', error);
+            if (error.message !== 'Unauthorized') {
+                console.warn('Could not load progress data:', error);
+            }
         }
     }
 
     updateProgressDisplay(progressData) {
+        if (!progressData) return;
         // Update topic cards based on actual progress
         const topicCards = document.querySelectorAll('.topic-card');
         
@@ -132,6 +159,34 @@ class DashboardManager {
         if (overallProgressBar) {
             overallProgressBar.style.width = `${progressData.overall_progress}%`;
         }
+    }
+
+    updateActivityFeed(activities) {
+        const activityList = document.querySelector('.activity-feed');
+        if (!activityList || !activities) return;
+
+        activityList.innerHTML = ''; // Clear existing activities
+
+        if (activities.length === 0) {
+            activityList.innerHTML = '<p class="text-gray-500">No recent activity.</p>';
+            return;
+        }
+
+        activities.forEach(activity => {
+            const item = document.createElement('div');
+            item.className = 'activity-item';
+            item.innerHTML = `
+                <div class="activity-icon ${activity.type}">
+                    <i class="fas fa-${activity.icon || 'check'}"></i>
+                </div>
+                <div class="activity-content">
+                    <h4>${activity.title}</h4>
+                    <p>${activity.description}</p>
+                    <span class="activity-time">${new Date(activity.timestamp).toLocaleString()}</span>
+                </div>
+            `;
+            activityList.appendChild(item);
+        });
     }
 
     setupEventListeners() {
@@ -233,42 +288,16 @@ class DashboardManager {
         console.log('User action tracked:', eventData);
     }
 
-    // Utility methods
-    showNotification(message, type = 'info') {
-        const notification = document.createElement('div');
-        notification.className = `notification ${type}-message fade-in`;
-        notification.textContent = message;
-        notification.style.position = 'fixed';
-        notification.style.top = '20px';
-        notification.style.right = '20px';
-        notification.style.zIndex = '1000';
-        notification.style.maxWidth = '400px';
-        notification.style.padding = '1rem';
-        notification.style.borderRadius = '0.5rem';
-        notification.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.1)';
-
-        document.body.appendChild(notification);
-
-        // Auto remove after 5 seconds
-        setTimeout(() => {
-            if (notification.parentNode) {
-                notification.style.opacity = '0';
-                setTimeout(() => {
-                    if (notification.parentNode) {
-                        notification.remove();
-                    }
-                }, 300);
-            }
-        }, 5000);
-
-        // Click to dismiss
-        notification.addEventListener('click', () => {
-            notification.remove();
-        });
+    // Utility methods    showNotification(message, type = 'info') {
+        // Use centralized notification system
+        errorHandler.showNotification(message, type);
     }
 
-    updateStreak(newStreak) {
-        const streakElement = document.querySelector('.stat-number');
+    updateStreak(streakData) {
+        if (!streakData) return;
+        const streakElement = document.querySelector('.stat-number'); // Assuming first stat is streak
+        const newStreak = streakData.current_streak;
+
         if (streakElement && streakElement.textContent !== newStreak.toString()) {
             streakElement.textContent = newStreak;
             
@@ -281,7 +310,7 @@ class DashboardManager {
                 streakElement.style.color = '';
             }, 600);
             
-            if (newStreak > parseInt(streakElement.dataset.previousValue || '0')) {
+            if (newStreak > (streakData.previous_streak || 0)) {
                 this.showNotification(`🔥 Great job! You're on a ${newStreak}-day streak!`, 'success');
             }
             

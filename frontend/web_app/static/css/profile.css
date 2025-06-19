@@ -1,9 +1,11 @@
 /* Profile Page Styles */
+/* Import the theme variables */
+@import 'theme.css';
 
 :root {
     --profile-gradient: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
-    --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-    --card-shadow-hover: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    --card-shadow: var(--shadow-md);
+    --card-shadow-hover: var(--shadow-lg);
 }
 
 /* Main Layout */

@@ -1,23 +1,29 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
+<head>    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quiz - {{ quiz_title }} | EduGenie</title>
+    <!-- Unified Theme System -->
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/theme.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/base.css') }}">
+    <!-- Page Specific Styles -->
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/navbar.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', path='/css/quiz_interface.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/notifications.css') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
-<body>
-    <!-- Quiz Header with Timer -->
+<body>    <!-- Quiz Header with Timer -->
     <header class="quiz-header">
         <div class="quiz-header-content">
             <div class="quiz-info">
+                <a href="/dashboard" class="btn btn-ghost btn-sm mb-sm">
+                    <i class="fas fa-arrow-left"></i> Back to Dashboard
+                </a>
                 <h1 class="quiz-title">{{ quiz_title }}</h1>
                 <p class="quiz-subject">{{ quiz_subject }}</p>
             </div>
-            
             <div class="timer-container">
                 <div class="timer-display">
                     <div class="timer-icon">⏱️</div>
@@ -219,6 +225,7 @@
         </div>
     </div>
 
+    <script src="{{ url_for('static', path='/js/error_handler.js') }}"></script>
     <script src="{{ url_for('static', path='/js/quiz_interface.js') }}"></script>
     
     <!-- Quiz Data for JavaScript -->

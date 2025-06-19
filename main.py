@@ -46,7 +46,7 @@ app.include_router(student_routes.router)
 app.include_router(oauth_router)
 
 # Include Auth router
-app.include_router(auth_router)
+app.include_router(auth_router, prefix="/api/auth")
 
 @app.get("/health")
 async def health_check() -> Dict[str, Any]:

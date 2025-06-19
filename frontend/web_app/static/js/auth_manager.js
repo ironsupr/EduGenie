@@ -180,28 +180,9 @@ class AuthStateManager {
             clearInterval(this.checkInterval);
             this.checkInterval = null;
         }
-    }
-
-    showNotification(message, type = 'info') {
-        // Create or update notification
-        let notification = document.querySelector('.auth-notification');
-        if (!notification) {
-            notification = document.createElement('div');
-            notification.className = 'auth-notification';
-            document.body.appendChild(notification);
-        }
-
-        notification.className = `auth-notification ${type}`;
-        notification.innerHTML = `
-            <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
-            <span>${message}</span>
-        `;
-        notification.style.display = 'block';
-
-        // Auto-hide after 3 seconds
-        setTimeout(() => {
-            notification.style.display = 'none';
-        }, 3000);
+    }    showNotification(message, type = 'info') {
+        // Use centralized notification system
+        errorHandler.showNotification(message, type);
     }
 
     setupNavigationHandlers() {

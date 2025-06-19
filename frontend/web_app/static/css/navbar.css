@@ -1,4 +1,7 @@
-/* Universal Navbar Component - Matching Landing Page Theme */
+/* Universal Navbar Component */
+
+/* Import the theme variables */
+@import 'theme.css';
 
 /* Navigation Styles */
 .navbar {
@@ -6,15 +9,15 @@
   top: 0;
   left: 0;
   right: 0;
-  z-index: 1000;
+  z-index: var(--z-index-fixed);
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(10px);
-  border-bottom: 1px solid var(--gray-200);
-  transition: all 0.3s ease;
+  border-bottom: 1px solid var(--border-light);
+  transition: all var(--transition-normal);
 }
 
 .navbar.scrolled {
-  background: var(--white);
+  background: var(--bg-header);
   box-shadow: var(--shadow-md);
 }
 

@@ -1,4 +1,6 @@
-/* Study page specific styles - Premium Dark Theme */
+/* Study page specific styles */
+/* Import the theme variables */
+@import 'theme.css';
 
 .study-header {
     background: linear-gradient(135deg, var(--bg-tertiary) 0%, var(--bg-elevated) 50%, var(--bg-card) 100%);

@@ -11,7 +11,7 @@ import logging
 
 # Import authentication dependencies from core
 from core.auth_models import UserProfile
-# from core.youtube_service import YouTubeService  # Commented out for now
+from core.dependencies import get_current_user
 
 # Setup logging
 def setup_logger(name):
@@ -25,17 +25,6 @@ def setup_logger(name):
     return logger
 
 logger = setup_logger(__name__)
-
-# Simple auth dependency for now
-def get_current_user() -> Optional[UserProfile]:
-    """Simple auth dependency - replace with real implementation"""
-    return None
-
-def require_auth() -> UserProfile:
-    """Simple require auth dependency - replace with real implementation"""
-    # For now, return a mock user or raise an exception
-    # In production, this should validate the user session
-    return None
 
 templates = Jinja2Templates(directory="frontend/web_app/templates")
 router = APIRouter()
@@ -52,9 +41,15 @@ async def home(request: Request):
 @router.get("/dashboard", response_class=HTMLResponse)
 async def dashboard(
     request: Request, 
-    current_user: UserProfile = Depends(require_auth)
+    current_user: Optional[UserProfile] = Depends(get_current_user)
 ):
     """Modern student dashboard with gamification and AI assistant"""
+    
+    # Check authentication
+    if not current_user:
+        # Redirect to login if not authenticated
+        return RedirectResponse(url="/login", status_code=303)
+    
     # Enhanced dashboard data using current user info
     student_data = {
         "name": current_user.full_name,
