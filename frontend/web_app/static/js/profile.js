@@ -133,6 +133,24 @@ class ProfileManager {
     }
 
     // API Methods
+    async handleApiResponse(response, successMessage) {
+        if (response.ok) {
+            if (successMessage) {
+                this.showAlert(successMessage, 'success');
+            }
+            return await response.json().catch(() => ({}));
+        } else if (response.status === 401) {
+            this.showAlert('Your session has expired. Please log in again.', 'error');
+            setTimeout(() => {
+                window.location.href = '/login?redirect_url=' + window.location.pathname;
+            }, 2000);
+            throw new Error('Unauthorized');
+        } else {
+            const error = await response.json().catch(() => ({ detail: 'An unknown error occurred.' }));
+            throw new Error(error.detail || 'An unknown error occurred.');
+        }
+    }
+
     async uploadAvatar(file) {
         try {
             const formData = new FormData();
@@ -144,14 +162,12 @@ class ProfileManager {
                 credentials: 'include'
             });
 
-            if (response.ok) {
-                this.showAlert('Profile picture updated successfully!', 'success');
-            } else {
-                throw new Error('Failed to upload avatar');
-            }
+            await this.handleApiResponse(response, 'Profile picture updated successfully!');
         } catch (error) {
-            console.error('Avatar upload error:', error);
-            this.showAlert('Failed to update profile picture', 'error');
+            if (error.message !== 'Unauthorized') {
+                console.error('Avatar upload error:', error);
+                this.showAlert(error.message || 'Failed to update profile picture', 'error');
+            }
         }
     }
 
@@ -169,14 +185,12 @@ class ProfileManager {
                 credentials: 'include'
             });
 
-            if (response.ok) {
-                this.showAlert('Personal information updated successfully!', 'success');
-            } else {
-                throw new Error('Failed to update personal information');
-            }
+            await this.handleApiResponse(response, 'Personal information updated successfully!');
         } catch (error) {
-            console.error('Save personal info error:', error);
-            this.showAlert('Failed to update personal information', 'error');
+            if (error.message !== 'Unauthorized') {
+                console.error('Save personal info error:', error);
+                this.showAlert(error.message || 'Failed to update personal information', 'error');
+            }
         }
     }
 
@@ -194,14 +208,12 @@ class ProfileManager {
                 credentials: 'include'
             });
 
-            if (response.ok) {
-                this.showAlert('Learning preferences updated successfully!', 'success');
-            } else {
-                throw new Error('Failed to update learning preferences');
-            }
+            await this.handleApiResponse(response, 'Learning preferences updated successfully!');
         } catch (error) {
-            console.error('Save learning preferences error:', error);
-            this.showAlert('Failed to update learning preferences', 'error');
+            if (error.message !== 'Unauthorized') {
+                console.error('Save learning preferences error:', error);
+                this.showAlert(error.message || 'Failed to update learning preferences', 'error');
+            }
         }
     }
 
@@ -216,12 +228,12 @@ class ProfileManager {
                 credentials: 'include'
             });
 
-            if (!response.ok) {
-                throw new Error('Failed to update notification setting');
-            }
+            await this.handleApiResponse(response, null); // No success message
         } catch (error) {
-            console.error('Update notification setting error:', error);
-            this.showAlert('Failed to update notification setting', 'error');
+            if (error.message !== 'Unauthorized') {
+                console.error('Update notification setting error:', error);
+                this.showAlert(error.message || 'Failed to update notification setting', 'error');
+            }
         }
     }
 
@@ -273,7 +285,6 @@ class ProfileManager {
         modal.querySelector('#change-password-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             await this.changePassword(new FormData(e.target));
-            document.body.removeChild(modal);
         });
 
         // Password strength indicator
@@ -308,15 +319,16 @@ class ProfileManager {
                 credentials: 'include'
             });
 
-            if (response.ok) {
-                this.showAlert('Password changed successfully!', 'success');
-            } else {
-                const error = await response.json();
-                throw new Error(error.detail || 'Failed to change password');
+            await this.handleApiResponse(response, 'Password changed successfully!');
+            const modal = document.querySelector('.modal-overlay');
+            if (modal) {
+                document.body.removeChild(modal);
             }
         } catch (error) {
-            console.error('Change password error:', error);
-            this.showAlert(error.message || 'Failed to change password', 'error');
+            if (error.message !== 'Unauthorized') {
+                console.error('Change password error:', error);
+                this.showAlert(error.message || 'Failed to change password', 'error');
+            }
         }
     }
 
@@ -342,8 +354,9 @@ class ProfileManager {
                 credentials: 'include'
             });
 
-            if (response.ok) {
-                const result = await response.json();
+            const result = await this.handleApiResponse(response, null);
+
+            if (result) {
                 this.showAlert(
                     result.enabled ? '2FA enabled successfully!' : '2FA disabled successfully!',
                     'success'
@@ -354,12 +367,12 @@ class ProfileManager {
                 if (btn) {
                     btn.textContent = result.enabled ? 'Disable 2FA' : 'Enable 2FA';
                 }
-            } else {
-                throw new Error('Failed to toggle 2FA');
             }
         } catch (error) {
-            console.error('Toggle 2FA error:', error);
-            this.showAlert('Failed to toggle 2FA', 'error');
+            if (error.message !== 'Unauthorized') {
+                console.error('Toggle 2FA error:', error);
+                this.showAlert(error.message || 'Failed to toggle 2FA', 'error');
+            }
         }
     }
 
@@ -387,36 +400,10 @@ class ProfileManager {
                 day.style.transform = 'scale(1)';
             }, index * 100);
         });
+    }    showAlert(message, type = 'info') {
+        // Use the centralized notification system
+        errorHandler.showNotification(message, type);
     }
-
-    showAlert(message, type = 'info') {
-        // Create alert element
-        const alert = document.createElement('div');
-        alert.className = `alert alert-${type}`;
-        alert.innerHTML = `
-            <div class="alert-content">
-                <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
-                <span>${message}</span>
-            </div>
-            <button class="alert-close">&times;</button>
-        `;
-
-        // Add to page
-        document.body.appendChild(alert);
-
-        // Auto remove after 5 seconds
-        setTimeout(() => {
-            if (document.body.contains(alert)) {
-                document.body.removeChild(alert);
-            }
-        }, 5000);
-
-        // Handle manual close
-        alert.querySelector('.alert-close').addEventListener('click', () => {
-            if (document.body.contains(alert)) {
-                document.body.removeChild(alert);
-            }
-        });
     }
 }
 

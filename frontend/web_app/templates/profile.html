@@ -1,43 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
+<head>    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ user.full_name or "User" }} - Profile Settings | EduGenie</title>
-    <link rel="stylesheet" href="{{ url_for('static', path='/css/landing.css') }}">
+    <!-- Unified Theme System -->
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/theme.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/base.css') }}">
+    <!-- Page Specific Styles -->
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/navbar.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', path='/css/profile.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', path='/css/auth_nav.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/notifications.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <meta name="description" content="Manage your EduGenie profile, learning preferences, and account settings">
 </head>
-<body>    <!-- Navigation -->
-    <nav class="navbar">
-        <div class="nav-container">
-            <a href="/" class="nav-brand">
-                <i class="fas fa-magic"></i>
-                <span>EduGenie</span>
-            </a>
-            <div class="nav-menu">
-                <a href="/dashboard" class="nav-link">
-                    <i class="fas fa-home"></i>
-                    Dashboard
-                </a>
-                <a href="/courses" class="nav-link">
-                    <i class="fas fa-book"></i>
-                    Courses
-                </a>
-                <a href="/progress" class="nav-link">
-                    <i class="fas fa-chart-line"></i>
-                    Progress
-                </a>                <a href="/learning" class="nav-link">
-                    <i class="fas fa-graduation-cap"></i>
-                    Study
-                </a>
-            </div>
-            <div class="nav-actions">
-                <!-- Enhanced user menu -->
-                <div class="nav-user-menu" id="nav-user-menu">                    <div class="nav-user-info" id="nav-user-toggle">
+<body>    <!-- Universal Navigation -->
+    {% include 'components/navbar.html' %}>                    <div class="nav-user-info" id="nav-user-toggle">
                         <img src="{{ user.avatar_url or url_for('static', path='/images/profile-logo.svg') }}" 
                              alt="Profile" class="nav-avatar profile-logo">
                         <div class="nav-user-details">
@@ -898,7 +877,7 @@
     <!-- Success/Error Messages -->
     <div id="message-container" class="message-container" style="display: none;"></div>
 
-    <!-- Scripts -->
+    <!-- Scripts -->    <script src="{{ url_for('static', path='/js/error_handler.js') }}"></script>
     <script src="{{ url_for('static', path='/js/landing.js') }}"></script>
     <script src="{{ url_for('static', path='/js/profile.js') }}"></script>
     <script src="{{ url_for('static', path='/js/auth_manager.js') }}"></script>

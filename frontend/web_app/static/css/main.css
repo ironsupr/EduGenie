@@ -1,52 +1,10 @@
-/* EduGenie - Premium Dark Theme */
+/* EduGenie - Main Styles */
 
-/* CSS Variables for dark theme */
-:root {
-  --primary-color: #00d9ff;
-  --primary-light: #33e1ff;
-  --primary-dark: #00a8cc;
-  --secondary-color: #ff6b9d;
-  --secondary-light: #ff8bb3;
-  --accent-color: #ffd93d;
-  --accent-dark: #ffcd00;
-  --success-color: #00f5a0;
-  --warning-color: #ffab00;
-  --error-color: #ff5252;
-  --text-primary: #ffffff;
-  --text-secondary: #a0a9c0;
-  --text-muted: #6b7794;
-  --bg-primary: #0f1419;
-  --bg-secondary: #1a1f2e;
-  --bg-tertiary: #232937;
-  --bg-card: #1e2532;
-  --bg-elevated: #252b3d;
-  --border-color: #2d3748;
-  --border-light: #374151;
-  --shadow-sm: 0 2px 4px 0 rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 8px 25px -5px rgba(0, 0, 0, 0.4);
-  --shadow-lg: 0 20px 40px -10px rgba(0, 0, 0, 0.5);
-  --shadow-xl: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
-  --radius-sm: 0.5rem;
-  --radius-md: 0.75rem;
-  --radius-lg: 1rem;
-  --radius-xl: 1.25rem;
-  --glow-primary: 0 0 20px rgba(0, 217, 255, 0.3);
-  --glow-secondary: 0 0 20px rgba(255, 107, 157, 0.3);
-  --glow-accent: 0 0 20px rgba(255, 217, 61, 0.3);
-}
-
-/* Reset and Base Styles */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+/* Import the theme variables */
+@import 'theme.css';
 
 body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  line-height: 1.6;
-  color: var(--text-primary);
-  background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+  /* No need to redefine styles here as they are already in theme.css */
   background-attachment: fixed;
   font-size: 16px;
   min-height: 100vh;

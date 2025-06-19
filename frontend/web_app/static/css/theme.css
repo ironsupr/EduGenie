@@ -1,0 +1,208 @@
+/* 
+ * EduGenie - Unified Theme System
+ * This file contains global design tokens and variables used across the application
+ */
+
+:root {
+  /* Primary Brand Colors */
+  --primary-color: #5F60F5;      /* Main brand color */
+  --primary-light: #7E7FF7;      /* Lighter variant for hover states */
+  --primary-dark: #4B4CD3;       /* Darker variant for active states */
+  
+  /* Secondary Brand Colors */
+  --secondary-color: #FCD34D;    /* Secondary brand color */
+  --secondary-light: #FDE68A;    /* Lighter secondary */
+  --secondary-dark: #F59E0B;     /* Darker secondary / warning */
+  
+  /* Accent Colors */
+  --accent-color: #10B981;       /* Accent/success color */
+  --accent-light: #34D399;       /* Lighter accent */
+  --accent-dark: #059669;        /* Darker accent */
+
+  /* Semantic Colors */
+  --success-color: #10B981;      /* Success messages and indicators */
+  --warning-color: #F59E0B;      /* Warning messages and indicators */
+  --error-color: #EF4444;        /* Error messages and indicators */
+  --info-color: #3B82F6;         /* Information messages and indicators */
+  
+  /* Neutral Colors - Light Theme */
+  --white: #FFFFFF;
+  --gray-50: #F9FAFB;            /* Background, cards */
+  --gray-100: #F3F4F6;           /* Dividers, subtle backgrounds */
+  --gray-200: #E5E7EB;           /* Borders, disabled elements */
+  --gray-300: #D1D5DB;           /* Disabled text, icons */
+  --gray-400: #9CA3AF;           /* Placeholder text */
+  --gray-500: #6B7280;           /* Secondary text */
+  --gray-600: #4B5563;           /* Body text */
+  --gray-700: #374151;           /* Headings */
+  --gray-800: #1F2937;           /* Emphasis text */
+  --gray-900: #111827;           /* High contrast text */
+  --black: #000000;
+
+  /* Text Colors */
+  --text-primary: var(--gray-800);       /* Primary text color */
+  --text-secondary: var(--gray-600);     /* Secondary text color */
+  --text-muted: var(--gray-500);         /* De-emphasized text */
+  --text-light: var(--white);            /* Text on dark backgrounds */
+  
+  /* Background Colors */
+  --bg-body: var(--gray-50);             /* Main background color */
+  --bg-card: var(--white);               /* Card backgrounds */
+  --bg-elevated: var(--white);           /* Elevated elements (dropdowns) */
+  --bg-muted: var(--gray-100);           /* Subtle backgrounds */
+  --bg-header: var(--white);             /* Header background */
+  --bg-footer: var(--gray-900);          /* Footer background */
+  
+  /* Border Colors */
+  --border-color: var(--gray-200);       /* Standard borders */
+  --border-light: var(--gray-100);       /* Subtle borders */
+  --border-focus: var(--primary-light);  /* Focus state borders */
+  
+  /* Shadow Values */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  --shadow-inner: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06);
+  
+  /* Border Radius */
+  --radius-sm: 0.25rem;    /* 4px - Small elements */
+  --radius-md: 0.5rem;     /* 8px - Buttons, cards */
+  --radius-lg: 0.75rem;    /* 12px - Large cards */
+  --radius-xl: 1rem;       /* 16px - Modal dialogs */
+  --radius-full: 9999px;   /* Pills, avatars */
+  
+  /* Spacing System */
+  --space-xs: 0.25rem;     /* 4px */
+  --space-sm: 0.5rem;      /* 8px */
+  --space-md: 1rem;        /* 16px - Base spacing unit */
+  --space-lg: 1.5rem;      /* 24px */
+  --space-xl: 2rem;        /* 32px */
+  --space-2xl: 3rem;       /* 48px */
+  --space-3xl: 4rem;       /* 64px */
+  
+  /* Typography */
+  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;
+  --font-size-xs: 0.75rem;    /* 12px */
+  --font-size-sm: 0.875rem;   /* 14px */
+  --font-size-md: 1rem;       /* 16px - Base font size */
+  --font-size-lg: 1.125rem;   /* 18px */
+  --font-size-xl: 1.25rem;    /* 20px */
+  --font-size-2xl: 1.5rem;    /* 24px */
+  --font-size-3xl: 1.875rem;  /* 30px */
+  --font-size-4xl: 2.25rem;   /* 36px */
+  --font-size-5xl: 3rem;      /* 48px */
+  
+  /* Font Weights */
+  --font-weight-light: 300;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --font-weight-extrabold: 800;
+  
+  /* Line Heights */
+  --line-height-tight: 1.25;   /* Headings */
+  --line-height-normal: 1.5;   /* Body text */
+  --line-height-relaxed: 1.75; /* Large paragraphs */
+  
+  /* Transitions */
+  --transition-fast: 150ms;    /* Quick interactions */
+  --transition-normal: 300ms;  /* Standard transitions */
+  --transition-slow: 500ms;    /* Complex animations */
+  
+  /* Z-index layers */
+  --z-index-dropdown: 1000;
+  --z-index-sticky: 1020;
+  --z-index-fixed: 1030;
+  --z-index-modal-backdrop: 1040;
+  --z-index-modal: 1050;
+  --z-index-popover: 1060;
+  --z-index-tooltip: 1070;
+}
+
+/* Custom Gradients */
+.primary-gradient {
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
+}
+
+.secondary-gradient {
+  background: linear-gradient(135deg, var(--secondary-color) 0%, var(--secondary-dark) 100%);
+}
+
+/* Dark mode support for future implementation */
+@media (prefers-color-scheme: dark) {
+  :root.dark-mode {
+    --text-primary: var(--gray-100);
+    --text-secondary: var(--gray-300);
+    --text-muted: var(--gray-400);
+    --text-light: var(--gray-100);
+    
+    --bg-body: var(--gray-900);
+    --bg-card: var(--gray-800);
+    --bg-elevated: var(--gray-800);
+    --bg-muted: var(--gray-700);
+    --bg-header: var(--gray-900);
+    --bg-footer: var(--black);
+    
+    --border-color: var(--gray-700);
+    --border-light: var(--gray-800);
+  }
+}
+
+/* Global Reset & Base Styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-family);
+  font-size: var(--font-size-md);
+  line-height: var(--line-height-normal);
+  color: var(--text-primary);
+  background-color: var(--bg-body);
+}
+
+a {
+  color: var(--primary-color);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+a:hover {
+  color: var(--primary-dark);
+}
+
+/* Utility Classes */
+.text-primary { color: var(--primary-color); }
+.text-secondary { color: var(--secondary-color); }
+.text-success { color: var(--success-color); }
+.text-warning { color: var(--warning-color); }
+.text-error { color: var(--error-color); }
+.text-info { color: var(--info-color); }
+
+.bg-primary { background-color: var(--primary-color); }
+.bg-secondary { background-color: var(--secondary-color); }
+.bg-success { background-color: var(--success-color); }
+.bg-warning { background-color: var(--warning-color); }
+.bg-error { background-color: var(--error-color); }
+.bg-info { background-color: var(--info-color); }
+.bg-muted { background-color: var(--bg-muted); }
+
+.rounded-sm { border-radius: var(--radius-sm); }
+.rounded-md { border-radius: var(--radius-md); }
+.rounded-lg { border-radius: var(--radius-lg); }
+.rounded-xl { border-radius: var(--radius-xl); }
+.rounded-full { border-radius: var(--radius-full); }
+
+/* Gradient Text Utility */
+.gradient-text {
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: transparent;
+  display: inline-block;
+}

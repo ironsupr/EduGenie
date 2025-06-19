@@ -1,10 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
+<head>    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Study: {{ topic.title }} – EduGenie</title>
-    <link rel="stylesheet" href="{{ url_for('static', path='/css/main.css') }}">
+    <!-- Unified Theme System -->
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/theme.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/base.css') }}">
+    <!-- Page Specific Styles -->
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/navbar.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', path='/css/study.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', path='/css/auth_nav.css') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -15,9 +18,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <meta name="description" content="Study {{ topic.title }} with EduGenie - interactive lessons, examples, and practice exercises">
 </head>
-<body>
-    <!-- Navigation -->
-    <nav class="navbar">
+<body>    <!-- Universal Navigation -->
+    {% include 'components/navbar.html' %}
         <div class="nav-container">
             <a href="/" class="nav-brand">
                 <i class="fas fa-magic"></i>
