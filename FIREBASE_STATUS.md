@@ -1,11 +1,5 @@
 # Firebase Configuration Status Check
 
-## Current Configuration
-
-- **Project ID**: `edugenie-h-ba04c`
-- **API Key**: `AIzaSyBNTSV9rG2CDziPjWkJd0Mz-kPHmpFwQzE`
-- **Auth Domain**: `edugenie-h-ba04c.firebaseapp.com`
-- **Storage Bucket**: `edugenie-h-ba04c.firebasestorage.app`
 
 ## Services Status
 
