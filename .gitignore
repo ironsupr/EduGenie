@@ -27,3 +27,10 @@ dist-ssr
 .env.local
 .env.production
 .env.development
+
+# Firebase credentials and sensitive files
+JSON/
+*.json
+!package.json
+!tsconfig*.json
+!eslint.config.js
