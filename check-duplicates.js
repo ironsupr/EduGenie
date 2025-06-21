@@ -2,12 +2,12 @@ import { initializeApp } from 'firebase/app';
 import { getFirestore, collection, getDocs } from 'firebase/firestore';
 
 const firebaseConfig = {
-  apiKey: 'AIzaSyBcWKODekmgEYNdKthrzfyKZP_tC0NQOPU',
-  authDomain: 'edugenie-h-ba04c.firebaseapp.com',
-  projectId: 'edugenie-h-ba04c',
-  storageBucket: 'edugenie-h-ba04c.firebasestorage.app',
-  messagingSenderId: '334872834045',
-  appId: '1:334872834045:web:b17fcf0a1a16db5e4e5b79'
+  apiKey: '',
+  authDomain: '',
+  projectId: '',
+  storageBucket: '',
+  messagingSenderId: '',
+  appId: ''
 };
 
 const app = initializeApp(firebaseConfig);
