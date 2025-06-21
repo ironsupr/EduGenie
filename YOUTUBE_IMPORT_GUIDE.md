@@ -36,6 +36,7 @@ npm run dev
 ## 🎯 Features
 
 ### 1. Single Video/Playlist Import
+
 - **URL**: `/youtube-import`
 - Import individual YouTube videos or entire playlists
 - Automatic course structure generation
@@ -43,12 +44,14 @@ npm run dev
 - Real-time preview of video content
 
 ### 2. Bulk Import
+
 - Import multiple YouTube URLs at once
 - Each URL becomes a separate course
 - Batch processing with success/failure reporting
 - Support for mixed video and playlist URLs
 
 ### 3. Automatic Course Generation
+
 - **Videos**: Converted to single-lesson courses
 - **Playlists**: Organized into modules (8 videos per module)
 - **Metadata**: Extracted from YouTube (title, description, duration, thumbnails)
@@ -58,6 +61,7 @@ npm run dev
 ## 📋 Supported URL Formats
 
 ### Video URLs
+
 ```
 https://www.youtube.com/watch?v=VIDEO_ID
 https://youtu.be/VIDEO_ID
@@ -65,6 +69,7 @@ https://www.youtube.com/embed/VIDEO_ID
 ```
 
 ### Playlist URLs
+
 ```
 https://www.youtube.com/playlist?list=PLAYLIST_ID
 https://www.youtube.com/watch?v=VIDEO_ID&list=PLAYLIST_ID
@@ -73,6 +78,7 @@ https://www.youtube.com/watch?v=VIDEO_ID&list=PLAYLIST_ID
 ## 🎓 How Courses are Structured
 
 ### From YouTube Video
+
 ```
 Course
 └── Module 1: Main Content
@@ -83,6 +89,7 @@ Course
 ```
 
 ### From YouTube Playlist
+
 ```
 Course
 ├── Module 1: [First 8 videos]
@@ -97,7 +104,9 @@ Course
 ## 🔍 Auto-Detection Rules
 
 ### Category Detection
+
 Based on keywords in title/description:
+
 - **Programming**: programming, coding, javascript, python, react, web development
 - **Mathematics**: math, calculus, algebra, geometry
 - **Science**: science, physics, chemistry, biology
@@ -108,7 +117,9 @@ Based on keywords in title/description:
 - **Medicine**: medicine, medical, health
 
 ### Level Detection
+
 Based on keywords in title/description:
+
 - **Beginner**: beginner, introduction, basics, fundamentals, getting started
 - **Advanced**: advanced, expert, master, professional
 - **Intermediate**: Everything else (default)
@@ -116,6 +127,7 @@ Based on keywords in title/description:
 ## 🛠️ Usage Examples
 
 ### Example 1: Import a Programming Playlist
+
 1. Go to `/youtube-import`
 2. Paste: `https://www.youtube.com/playlist?list=PLWKjhJtqVAbnqBxcdjVGgT3uVR10bzTEB`
 3. Customize if needed:
@@ -126,6 +138,7 @@ Based on keywords in title/description:
 4. Click "Import Course"
 
 ### Example 2: Bulk Import Educational Videos
+
 1. Go to `/youtube-import`
 2. Click "Bulk Import" tab
 3. Add multiple URLs:
@@ -137,6 +150,7 @@ Based on keywords in title/description:
 4. Click "Bulk Import"
 
 ### Example 3: Import with Custom Metadata
+
 1. Paste YouTube URL
 2. Customize fields:
    - **Title**: Override the YouTube title
@@ -148,6 +162,7 @@ Based on keywords in title/description:
 ## 📊 Import Results
 
 ### Success Response
+
 ```javascript
 {
   success: true,
@@ -157,6 +172,7 @@ Based on keywords in title/description:
 ```
 
 ### Bulk Import Response
+
 ```javascript
 {
   success: true,
@@ -169,21 +185,25 @@ Based on keywords in title/description:
 ## ⚠️ Limitations & Notes
 
 ### API Quotas
+
 - YouTube Data API has daily quotas
 - Each import uses multiple API calls
 - Monitor usage in Google Cloud Console
 
 ### Content Restrictions
+
 - Only public videos/playlists can be imported
 - Age-restricted content may not be accessible
 - Some videos may have embedding disabled
 
 ### Course Quality
+
 - Auto-generated courses may need manual review
 - Consider editing course descriptions and module organization
 - Add your own assessments and supplementary materials
 
 ### Performance
+
 - Large playlists (50+ videos) may take time to import
 - Bulk imports are processed sequentially
 - Network timeout may occur for very large imports
@@ -191,20 +211,24 @@ Based on keywords in title/description:
 ## 🔧 Troubleshooting
 
 ### "YouTube API key not configured"
+
 - Check that `VITE_YOUTUBE_API_KEY` is set in `.env.local`
 - Restart the development server after adding the key
 
 ### "YouTube API error: 403"
+
 - API key may be invalid or restricted
 - Check API quotas in Google Cloud Console
 - Ensure YouTube Data API v3 is enabled
 
 ### "Could not fetch playlist details"
+
 - Playlist may be private or deleted
 - Check the URL format
 - Try with a different playlist
 
 ### "Failed to import from YouTube"
+
 - Check network connection
 - Verify the YouTube URL is valid and public
 - Try importing a single video first to test API setup
@@ -212,7 +236,9 @@ Based on keywords in title/description:
 ## 🚀 Advanced Usage
 
 ### Custom Course Structure
+
 After importing, you can:
+
 1. Edit course metadata
 2. Reorganize modules and lessons
 3. Add quizzes and assessments
@@ -220,23 +246,21 @@ After importing, you can:
 5. Set up discussions and forums
 
 ### Integration with Existing Courses
+
 - Import YouTube content as supplementary material
 - Embed videos in existing course lessons
 - Create hybrid courses with multiple content sources
 
 ### Batch Processing Scripts
+
 For large-scale imports, consider creating custom scripts using the import utilities:
 
 ```typescript
-import { bulkImportFromYouTube } from './utils/youtubeImporter';
+import { bulkImportFromYouTube } from "./utils/youtubeImporter";
 
 const urls = [
   // ... array of YouTube URLs
 ];
 
-const result = await bulkImportFromYouTube(
-  urls, 
-  instructorId, 
-  instructorName
-);
+const result = await bulkImportFromYouTube(urls, instructorId, instructorName);
 ```
