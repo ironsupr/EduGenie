@@ -52,6 +52,7 @@ For full functionality, you'll need to set up a Firebase project:
 6. Copy your config from Project Settings > General > Your apps
 7. Update `.env.local` with your actual Firebase configuration
 8. Update check-duplicates.js with valid credentials
+9. Update remove-duplicates.js with valid credentials
 
 ### Development
 
