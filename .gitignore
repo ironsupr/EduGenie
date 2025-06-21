@@ -34,3 +34,7 @@ JSON/
 !package.json
 !tsconfig*.json
 !eslint.config.js
+
+FIREBASE_STATUS.md
+remove-duplicates.js
+test-youtube.js
