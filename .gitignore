@@ -35,9 +35,29 @@ JSON/
 !tsconfig*.json
 !eslint.config.js
 
+# Firebase documentation and temporary files
 FIREBASE_STATUS.md
+FIREBASE_SETUP_STATUS.md
+FIREBASE_CHECKERS_README.md
+FIREBASE_SETUP_GUIDE.md
+COMPREHENSIVE_FIREBASE_CHECKER_README.md
+LANDING_PAGE_DIAGNOSIS.md
+STORAGE_ALTERNATIVES.md
+YOUTUBE_IMPORT_GUIDE.md
+
+# Development and testing files
+*.py
+*.bat
+debug-*.js
+test-*.js
+inspect-*.js
+check-*.js
 remove-duplicates.js
-test-youtube.js
-check-duplicates.js
-remove-duplicates.js
-remove-duplicates.js
+comprehensive_firebase_checker.py
+enhanced_firebase_checker.py
+final_firebase_verification.py
+quick_app_diagnosis.py
+quick_firebase_check.py
+emergency-test.html
+troubleshoot.html
+
