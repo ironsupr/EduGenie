@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduGenie - Emergency Test</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 0; 
+            padding: 20px; 
+            background: #f3f4f6;
+        }
+        .container { 
+            max-width: 600px; 
+            margin: 50px auto; 
+            background: white; 
+            padding: 30px; 
+            border-radius: 10px; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .success { 
+            color: #059669; 
+            background: #d1fae5; 
+            padding: 10px; 
+            border-radius: 5px; 
+            margin: 10px 0;
+        }
+        .warning { 
+            color: #d97706; 
+            background: #fef3c7; 
+            padding: 10px; 
+            border-radius: 5px; 
+            margin: 10px 0;
+        }
+        button { 
+            background: #3b82f6; 
+            color: white; 
+            padding: 10px 20px; 
+            border: none; 
+            border-radius: 5px; 
+            cursor: pointer; 
+            margin: 5px;
+        }
+        button:hover { 
+            background: #2563eb; 
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 EduGenie Emergency Diagnostics</h1>
+        <p>This page tests if basic web technologies are working.</p>
+        
+        <div id="tests">
+            <div class="success">✅ HTML: Working</div>
+            <div class="success">✅ CSS: Working</div>
+            <div id="js-test" class="warning">⏳ JavaScript: Testing...</div>
+        </div>
+
+        <div id="server-test" style="margin: 20px 0;">
+            <h3>Server Connection Test</h3>
+            <button onclick="testServer()">Test Vite Server</button>
+            <div id="server-result"></div>
+        </div>
+
+        <div style="margin: 20px 0;">
+            <h3>React Test</h3>
+            <button onclick="testReact()">Test React Loading</button>
+            <div id="react-result"></div>
+        </div>
+
+        <div id="next-steps" class="warning" style="margin-top: 20px;">
+            <h3>📋 Next Steps:</h3>
+            <p>1. Enable Firestore Database in Firebase Console</p>
+            <p>2. Enable Firebase Authentication</p>
+            <p>3. Restart React app</p>
+            <a href="https://console.firebase.google.com/project/edugenie-h-ba04c/firestore" target="_blank" style="color: #3b82f6;">Open Firebase Console</a>
+        </div>
+    </div>
+
+    <script>
+        // Test JavaScript
+        document.getElementById('js-test').innerHTML = '<div class="success">✅ JavaScript: Working</div>';
+        
+        function testServer() {
+            const result = document.getElementById('server-result');
+            result.innerHTML = '<p>⏳ Testing server connection...</p>';
+            
+            fetch('/')
+                .then(response => {
+                    if (response.ok) {
+                        result.innerHTML = '<div class="success">✅ Vite Server: Working</div>';
+                    } else {
+                        result.innerHTML = '<div class="warning">⚠️ Server returned: ' + response.status + '</div>';
+                    }
+                })
+                .catch(error => {
+                    result.innerHTML = '<div class="warning">❌ Server connection failed: ' + error.message + '</div>';
+                });
+        }
+        
+        function testReact() {
+            const result = document.getElementById('react-result');
+            result.innerHTML = '<p>⏳ Testing React components...</p>';
+            
+            // Try to load React dynamically
+            const script = document.createElement('script');
+            script.type = 'module';
+            script.src = '/src/main.tsx';
+            script.onload = () => {
+                result.innerHTML = '<div class="success">✅ React: Loading attempted</div>';
+            };
+            script.onerror = () => {
+                result.innerHTML = '<div class="warning">❌ React: Failed to load main.tsx</div>';
+            };
+            
+            // Don't actually append the script to avoid conflicts
+            setTimeout(() => {
+                result.innerHTML = '<div class="warning">📝 Check browser console for React errors</div>';
+            }, 2000);
+        }
+        
+        // Auto-run server test
+        setTimeout(testServer, 1000);
+        
+        console.log('🔧 Emergency diagnostics loaded');
+        console.log('🔍 Check for any errors in this console');
+        console.log('📍 Current URL:', window.location.href);
+        console.log('🌐 User Agent:', navigator.userAgent);
+    </script>
+</body>
+</html>

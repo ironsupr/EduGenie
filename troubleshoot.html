@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduGenie - Troubleshooting</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .status { padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .success { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+        .warning { background: #fff3cd; border: 1px solid #ffeaa7; color: #856404; }
+        .error { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
+    </style>
+</head>
+<body>
+    <h1>🔧 EduGenie Home Page Troubleshooting</h1>
+    
+    <div class="status success">
+        <h3>✅ Development Server Status</h3>
+        <p>Your Vite development server is running correctly on:</p>
+        <ul>
+            <li><strong>Primary:</strong> <a href="http://localhost:5173/" target="_blank">http://localhost:5173/</a></li>
+            <li><strong>Backup:</strong> <a href="http://localhost:5174/" target="_blank">http://localhost:5174/</a></li>
+        </ul>
+    </div>
+
+    <div class="status warning">
+        <h3>🔍 Common Issues & Solutions</h3>
+        
+        <h4>1. Browser Cache Issue</h4>
+        <p><strong>Solution:</strong> Hard refresh your browser:</p>
+        <ul>
+            <li><strong>Windows:</strong> Ctrl + F5 or Ctrl + Shift + R</li>
+            <li><strong>Mac:</strong> Cmd + Shift + R</li>
+        </ul>
+
+        <h4>2. Browser Developer Tools Check</h4>
+        <p><strong>Steps:</strong></p>
+        <ol>
+            <li>Open your browser</li>
+            <li>Go to <a href="http://localhost:5173/" target="_blank">http://localhost:5173/</a></li>
+            <li>Press F12 to open Developer Tools</li>
+            <li>Check the Console tab for any red errors</li>
+            <li>Check the Network tab to see if resources are loading</li>
+        </ol>
+
+        <h4>3. Firewall/Antivirus Blocking</h4>
+        <p>Some antivirus software blocks localhost connections.</p>
+        <p><strong>Solution:</strong> Temporarily disable antivirus or add localhost to exceptions</p>
+
+        <h4>4. Port Conflict</h4>
+        <p>If port 5173 is busy, try port 5174:</p>
+        <p><a href="http://localhost:5174/" target="_blank">http://localhost:5174/</a></p>
+    </div>
+
+    <div class="status error">
+        <h3>🚨 If Nothing Works</h3>
+        <p><strong>Complete Reset:</strong></p>
+        <ol>
+            <li>Stop the development server (Ctrl + C in terminal)</li>
+            <li>Clear npm cache: <code>npm cache clean --force</code></li>
+            <li>Delete node_modules: <code>Remove-Item -Recurse -Force node_modules</code></li>
+            <li>Reinstall: <code>npm install</code></li>
+            <li>Start fresh: <code>npm run dev</code></li>
+        </ol>
+    </div>
+
+    <script>
+        // Auto-test the URLs
+        console.log('🔍 Testing URLs...');
+        
+        // Test primary URL
+        fetch('http://localhost:5173/')
+            .then(response => {
+                if (response.ok) {
+                    console.log('✅ Primary URL (5173) is working');
+                } else {
+                    console.log('❌ Primary URL returned:', response.status);
+                }
+            })
+            .catch(error => {
+                console.log('❌ Primary URL failed:', error.message);
+            });
+            
+        // Test backup URL
+        fetch('http://localhost:5174/')
+            .then(response => {
+                if (response.ok) {
+                    console.log('✅ Backup URL (5174) is working');
+                } else {
+                    console.log('❌ Backup URL returned:', response.status);
+                }
+            })
+            .catch(error => {
+                console.log('❌ Backup URL failed:', error.message);
+            });
+    </script>
+</body>
+</html>

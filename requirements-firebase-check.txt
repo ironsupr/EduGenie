@@ -1,0 +1,5 @@
+# Python requirements for Firebase configuration checker
+firebase-admin==6.2.0
+google-cloud-firestore==2.11.1
+requests==2.31.0
+python-dotenv==1.0.0
